@@ -1,0 +1,43 @@
+digraph ERD {
+  rankdir=LR; bgcolor="white"; nodesep=0.5; ranksep=1.0;
+  node [shape=plaintext, fontname="Helvetica", fontsize=10];
+  edge [fontname="Helvetica", fontsize=9, color="#2c7a7b", arrowhead=crow, arrowtail=none, dir=both, arrowtail=tee];
+
+  users [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="3"><TR><TD BGCOLOR="#2c7a7b"><FONT COLOR="white"><B>users</B></FONT></TD></TR>
+   <TR><TD ALIGN="LEFT">PK id</TD></TR><TR><TD ALIGN="LEFT">name</TD></TR><TR><TD ALIGN="LEFT">email (unique)</TD></TR><TR><TD ALIGN="LEFT">password</TD></TR>
+   <TR><TD ALIGN="LEFT">role  admin|manager|member</TD></TR><TR><TD ALIGN="LEFT">is_active</TD></TR><TR><TD ALIGN="LEFT">avatar_color</TD></TR><TR><TD ALIGN="LEFT">last_login_at</TD></TR></TABLE>>];
+
+  tasks [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="3"><TR><TD BGCOLOR="#d4a017"><B>tasks</B></TD></TR>
+   <TR><TD ALIGN="LEFT">PK id</TD></TR><TR><TD ALIGN="LEFT">FK user_id (owner)</TD></TR><TR><TD ALIGN="LEFT">FK assignee_id (null)</TD></TR><TR><TD ALIGN="LEFT">FK category_id (null)</TD></TR>
+   <TR><TD ALIGN="LEFT">title (150)</TD></TR><TR><TD ALIGN="LEFT">description (null)</TD></TR><TR><TD ALIGN="LEFT">status  pending|completed</TD></TR><TR><TD ALIGN="LEFT">priority  low..urgent</TD></TR>
+   <TR><TD ALIGN="LEFT">due_date (null)</TD></TR><TR><TD ALIGN="LEFT">completed_at (null)</TD></TR><TR><TD ALIGN="LEFT">position (drag order)</TD></TR><TR><TD ALIGN="LEFT">deleted_at (soft delete)</TD></TR><TR><TD ALIGN="LEFT">created_at / updated_at</TD></TR></TABLE>>];
+
+  categories [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="3"><TR><TD BGCOLOR="#2c7a7b"><FONT COLOR="white"><B>categories</B></FONT></TD></TR>
+   <TR><TD ALIGN="LEFT">PK id</TD></TR><TR><TD ALIGN="LEFT">name (unique)</TD></TR><TR><TD ALIGN="LEFT">color</TD></TR><TR><TD ALIGN="LEFT">description</TD></TR><TR><TD ALIGN="LEFT">FK created_by (null)</TD></TR></TABLE>>];
+
+  tags [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="3"><TR><TD BGCOLOR="#2c7a7b"><FONT COLOR="white"><B>tags</B></FONT></TD></TR>
+   <TR><TD ALIGN="LEFT">PK id</TD></TR><TR><TD ALIGN="LEFT">name (unique)</TD></TR><TR><TD ALIGN="LEFT">slug (unique)</TD></TR></TABLE>>];
+
+  task_tag [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="3"><TR><TD BGCOLOR="#9aa5b1"><B>task_tag (pivot)</B></TD></TR>
+   <TR><TD ALIGN="LEFT">PK/FK task_id</TD></TR><TR><TD ALIGN="LEFT">PK/FK tag_id</TD></TR></TABLE>>];
+
+  subtasks [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="3"><TR><TD BGCOLOR="#2c7a7b"><FONT COLOR="white"><B>subtasks</B></FONT></TD></TR>
+   <TR><TD ALIGN="LEFT">PK id</TD></TR><TR><TD ALIGN="LEFT">FK task_id</TD></TR><TR><TD ALIGN="LEFT">title</TD></TR><TR><TD ALIGN="LEFT">is_done</TD></TR><TR><TD ALIGN="LEFT">position</TD></TR></TABLE>>];
+
+  task_comments [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="3"><TR><TD BGCOLOR="#2c7a7b"><FONT COLOR="white"><B>task_comments</B></FONT></TD></TR>
+   <TR><TD ALIGN="LEFT">PK id</TD></TR><TR><TD ALIGN="LEFT">FK task_id</TD></TR><TR><TD ALIGN="LEFT">FK user_id</TD></TR><TR><TD ALIGN="LEFT">body</TD></TR></TABLE>>];
+
+  activity_logs [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="3"><TR><TD BGCOLOR="#6f42c1"><FONT COLOR="white"><B>activity_logs</B></FONT></TD></TR>
+   <TR><TD ALIGN="LEFT">PK id</TD></TR><TR><TD ALIGN="LEFT">FK user_id (null)</TD></TR><TR><TD ALIGN="LEFT">task_id (no FK: survives purge)</TD></TR><TR><TD ALIGN="LEFT">action, description</TD></TR><TR><TD ALIGN="LEFT">properties (json diff)</TD></TR><TR><TD ALIGN="LEFT">source  web|ai</TD></TR><TR><TD ALIGN="LEFT">ip_address, created_at</TD></TR></TABLE>>];
+
+  ai_messages [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="3"><TR><TD BGCOLOR="#6f42c1"><FONT COLOR="white"><B>ai_messages</B></FONT></TD></TR>
+   <TR><TD ALIGN="LEFT">PK id</TD></TR><TR><TD ALIGN="LEFT">FK user_id</TD></TR><TR><TD ALIGN="LEFT">role  user|assistant</TD></TR><TR><TD ALIGN="LEFT">content</TD></TR><TR><TD ALIGN="LEFT">proposals (json)</TD></TR><TR><TD ALIGN="LEFT">model</TD></TR></TABLE>>];
+
+  users -> tasks [label="owns (user_id)"];
+  users -> tasks [label="assigned (assignee_id)", style=dashed];
+  categories -> tasks [label="groups"];
+  tasks -> task_tag; tags -> task_tag;
+  tasks -> subtasks; tasks -> task_comments; users -> task_comments;
+  users -> categories [label="created_by", style=dashed];
+  users -> activity_logs; users -> ai_messages;
+}

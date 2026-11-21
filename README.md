@@ -1,59 +1,150 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Task Manager
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A Laravel 12 + Bootstrap 4 task manager built for the practical coding test. It covers every required feature (create, view, edit, delete with a confirmation modal, completed/pending status) and all three bonus features (search, pagination, drag-and-drop), then goes further with role-based access, a service layer, an audit trail, a dashboard and an AI assistant.
 
-## About Laravel
+| | |
+|---|---|
+| Framework | Laravel 12 (PHP 8.2+) |
+| Frontend | Bootstrap 4.6 (served locally from `public/vendor`, no build step) |
+| Database | MySQL (XAMPP) via migrations + Eloquent |
+| Auth | Session auth, 3 roles (admin / manager / member) |
+| Tests | 40 feature tests (`php artisan test`) |
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 1. Quick start on XAMPP (Windows)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+**Requirements:** XAMPP with PHP 8.2 or newer (check with `php -v`), Composer, Git.
 
-## Learning Laravel
+1. Start **Apache** and **MySQL** in the XAMPP control panel.
+2. Open phpMyAdmin (`http://localhost/phpmyadmin`) and create an empty database called **`task_manager`** (collation `utf8mb4_unicode_ci`).
+3. In a terminal, inside the project folder:
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+```bash
+composer install
+copy .env.example .env          # macOS/Linux: cp .env.example .env
+php artisan key:generate
+php artisan migrate --seed      # creates all tables + demo data
+php artisan serve
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+4. Open **http://127.0.0.1:8000** and sign in with a demo account (the login page has click-to-fill buttons):
 
-## Laravel Sponsors
+| Role | Email | Password |
+|---|---|---|
+| Admin | `admin@taskmanager.test` | `password` |
+| Manager | `manager@taskmanager.test` | `password` |
+| Member | `member@taskmanager.test` | `password` |
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+The default `.env` uses `DB_USERNAME=root` with an empty password, which is the XAMPP default. If you set a MySQL password, put it in `DB_PASSWORD`.
 
-### Premium Partners
+No `npm install` is needed: Bootstrap, jQuery, Font Awesome, SortableJS and Chart.js are committed under `public/vendor`.
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+> **Starting clean:** the first account you register on an empty database becomes the admin. `php artisan migrate:fresh --seed` resets everything to the demo data.
 
-## Contributing
+### Run the tests
+```bash
+php artisan test
+```
+Tests use an in-memory SQLite database, so they never touch your MySQL data. (Enable `pdo_sqlite` in `php.ini` if it is not already on; it is on by default in XAMPP.)
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+---
 
-## Code of Conduct
+## 2. What is implemented
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Required features
+| Requirement | Where |
+|---|---|
+| Create task (title required, description optional, status required: Completed / Pending) | `/tasks/create`, `TaskRequest` |
+| Form validation with friendly messages | `app/Http/Requests/TaskRequest.php`, inline errors + summary |
+| List all tasks: title, **creation date**, status, Bootstrap 4 styling | `/tasks`, `resources/views/tasks/_row.blade.php` |
+| Edit task with validation, change status | `/tasks/{id}/edit` (same `TaskRequest`, so rules never drift) |
+| Delete with a **confirmation modal** | one shared Bootstrap modal, `partials/delete-modal.blade.php` |
+| Mark Completed / Pending, visual distinction | one-click circle button (AJAX, no reload); green border + strike-through vs. amber border; red for overdue |
+| Migrations + Eloquent | `database/migrations`, `app/Models` |
+| Error handling | validation messages, friendly 403/404/419/429/500 pages, JSON errors for AJAX |
 
-## Security Vulnerabilities
+### Bonus features (all three)
+- **Search and filter:** one box searches title, description, tags and the words "pending"/"completed". Extra filters: priority, category, due date, assignee, tag, sort order, page size.
+- **Pagination:** Bootstrap 4 pagination, 10/20/50 per page, filters preserved across pages.
+- **Drag-and-drop reordering:** grab the handle on any row; the order is saved via AJAX (`position` column). Tasks on other pages keep their place.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Beyond the brief
+- **Role-based access control** (admin / manager / member) enforced three ways: route middleware, a `TaskPolicy`, and row-level query scoping. See [`docs/RBAC.md`](docs/RBAC.md).
+- **Service layer** (`TaskService`) so the web UI, the AI assistant and the seeder share one code path and one set of rules.
+- **Dashboard** with live stats, 14-day completion chart, priority chart, upcoming tasks and team workload.
+- **Priorities, due dates, categories, tags, checklists (subtasks), comments.**
+- **Soft deletes + trash:** deleted tasks can be restored by a manager/admin; only an admin can delete permanently.
+- **Audit trail** (`activity_logs`): who did what, with before/after diffs and the source (web or AI).
+- **User management** for admins (create, change role, deactivate, delete).
+- **AI assistant** (Gemini) that can find, create, update, complete and delete tasks by chat, always through a confirmation card. Works offline too. See [`docs/AI_ASSISTANT.md`](docs/AI_ASSISTANT.md).
+- Dark/light theme, responsive layout, keyboard focus styles, reduced-motion support.
 
-## License
+---
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## 3. My approach
+
+1. **Schema first.** I designed the database before any UI (see [`docs/DATABASE.md`](docs/DATABASE.md) and the ERD below), with indexes for every column the UI filters or sorts on.
+2. **Thin controllers, fat services.** Controllers authorise, validate and return a response. All business rules (status timestamps, ordering, audit logging) live in `TaskService`.
+3. **One validation definition.** `TaskRequest::baseRules()` is used by the create form, the edit form and the AI assistant.
+4. **Security by default.** Every task route is protected by policy; members cannot even see other people's tasks (they get a 403 on direct URL access). The AI can never do more than the signed-in user.
+5. **Tests for behaviour, not lines.** The suite covers validation, CRUD, status toggle, search, pagination, reordering, every role boundary, the AI flow, and renders every page for every role.
+
+![ERD](docs/ERD.png)
+
+---
+
+## 4. Assumptions
+
+- "Status" is exactly two values, **Pending** and **Completed**, as the brief states; priority is a separate field.
+- The brief does not mention login, but a multi-role system needs it, so there is session auth. The first registered user on a fresh database becomes admin; later sign-ups are members.
+- A member sees tasks they **own** or that are **assigned** to them. Managers and admins see everything.
+- Deleting is a **soft delete** (recoverable) because accidental deletion is the most common data-loss bug in task apps.
+- Past due dates are allowed (you may record work after the fact).
+- New tasks appear at the top of the manual order.
+- Bootstrap 4 is required, so the UI is built on 4.6; the theme layer is plain CSS in `public/css/app.css`.
+- Local fonts are not bundled: the UI falls back to system fonts if Google Fonts is unreachable.
+
+---
+
+## 5. Project structure
+
+```
+app/
+  Enums/            TaskStatus, TaskPriority, UserRole
+  Http/
+    Controllers/    Task, Subtask, TaskComment, Category, User, Activity, Profile, Dashboard, Ai, Auth/AuthController
+    Middleware/     RoleMiddleware (role:admin,manager), EnsureUserIsActive
+    Requests/       TaskRequest (create + edit + AI share these rules)
+  Models/           User, Task, Category, Tag, Subtask, TaskComment, ActivityLog, AiMessage
+  Policies/         TaskPolicy
+  Services/         TaskService, StatsService, ActivityLogger, Ai/{GeminiClient, AssistantService, AiActions, OfflineAssistant, AiLog}
+database/           migrations, factories, seeders (demo data)
+resources/views/    layouts, partials, tasks, dashboard, categories, users, activity, profile, auth, errors
+public/             css/app.css, js/app.js, js/ai.js, vendor/ (Bootstrap 4, jQuery, Font Awesome, SortableJS, Chart.js)
+tests/Feature/      Auth, TaskCrud, Rbac, AiAssistant, PagesRender
+docs/               DATABASE, ARCHITECTURE, RBAC, AI_ASSISTANT, WORKPLAN, ERD
+```
+
+## 6. Enabling the AI assistant (optional)
+
+Get a free key from Google AI Studio and put it in `.env`:
+
+```
+GEMINI_API_KEYS=your-key-1,your-key-2
+```
+Then `php artisan config:clear`. Several keys can be listed (comma separated); they are rotated automatically when one is rate-limited. With no key the assistant runs in **offline mode** and understands commands such as `add task Buy milk due tomorrow priority high`, `complete #3`, `show overdue`, `summary`. AI activity is logged to `storage/logs/ai-*.log` and flagged `AI` in the activity log.
+
+## 7. Git history
+
+The history is organised in focused commits (database, auth + RBAC, task CRUD, UI, AI, tests, docs). Run `git log --oneline` to see it.
+
+## 8. Troubleshooting
+
+| Problem | Fix |
+|---|---|
+| `SQLSTATE[HY000] [1049] Unknown database` | Create the `task_manager` database in phpMyAdmin first. |
+| `could not find driver` | Enable `extension=pdo_mysql` (and `pdo_sqlite` for tests) in `C:\xampp\php\php.ini`, restart Apache. |
+| Blank page / 500 error | Run `php artisan key:generate` and `php artisan config:clear`; check `storage/logs/laravel.log`. |
+| `Your requirements could not be resolved` | PHP must be 8.2+. Use a newer XAMPP or point Composer at it. |
+| AI says "offline mode" | No `GEMINI_API_KEYS` in `.env`, or `php artisan config:clear` was not run. |
