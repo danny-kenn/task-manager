@@ -2,23 +2,29 @@
 
 namespace App\Providers;
 
+use App\Models\User;
+use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
         //
     }
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
-        //
+        // The assessment requires Bootstrap 4 markup for pagination.
+        Paginator::useBootstrapFour();
+
+        // Coarse-grained, role-based abilities (task-level rules live in App\Policies\TaskPolicy).
+        Gate::define('manage-users', fn (User $u) => $u->isAdmin());
+        Gate::define('manage-categories', fn (User $u) => $u->isStaff());
+        Gate::define('view-activity', fn (User $u) => $u->isStaff());
+        Gate::define('assign-tasks', fn (User $u) => $u->isStaff());
+        Gate::define('view-trash', fn (User $u) => $u->isStaff());
+        Gate::define('use-ai', fn (User $u) => $u->is_active);
     }
 }
