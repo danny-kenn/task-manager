@@ -35,4 +35,17 @@ return [
         ],
     ],
 
+
+    /*
+     |--------------------------------------------------------------------------
+     | Gemini (AI assistant)
+     |--------------------------------------------------------------------------
+     | Put one or several Google AI Studio keys in .env, comma separated. They are
+     | rotated automatically. With no key the assistant still works in offline mode.
+     */
+    'gemini' => [
+        'keys' => env('GEMINI_API_KEYS', env('GEMINI_API_KEY', '')),
+        'endpoint' => env('GEMINI_ENDPOINT', 'https://generativelanguage.googleapis.com/v1beta'),
+    ],
+
 ];
