@@ -7,6 +7,7 @@ use App\Enums\TaskStatus;
 use App\Models\Tag;
 use App\Models\Task;
 use App\Models\User;
+use App\Services\Notifier;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
@@ -60,7 +61,10 @@ class TaskService
             'due' => $q->orderByRaw('due_date is null')->orderBy('due_date'),
             'priority' => $q->orderByRaw("case priority when 'urgent' then 4 when 'high' then 3 when 'medium' then 2 else 1 end desc")->orderByDesc('id'),
             'title' => $q->orderBy('title'),
-            default => $q->manualOrder(),
+            'smart' => $q->orderByRaw("case when status = 'pending' and due_date is not null and due_date < ? then 0 else 1 end", [today()->toDateString()])
+                ->orderByRaw("case priority when 'urgent' then 4 when 'high' then 3 when 'medium' then 2 else 1 end desc")
+                ->orderByRaw('due_date is null')->orderBy('due_date'),
+            default => $q->manualOrderFor($user),
         };
 
         return $q;
@@ -91,6 +95,8 @@ class TaskService
             }
 
             ActivityLogger::record($actor, $task->id, 'created', "Created task “{$task->title}”", ['status' => $status->value, 'priority' => $task->priority->value], $source);
+            $this->notifyAssigned($actor, $task);
+            $this->notifyTeam('team_created', $task, $actor, 'New task: “'.$task->title.'”', $this->brief($actor, $task, 'created'));
 
             return $task->load(['category', 'tags', 'assignee', 'owner']);
         });
@@ -101,6 +107,7 @@ class TaskService
         return DB::transaction(function () use ($actor, $task, $data, $source) {
             $before = $task->only(self::TRACKED);
             $oldStatus = $task->status;
+            $oldAssignee = $task->assignee_id;
 
             $fill = [];
             foreach (['title', 'description', 'priority', 'due_date', 'category_id'] as $k) {
@@ -146,6 +153,18 @@ class TaskService
                 );
             }
 
+            if ($oldAssignee !== $task->assignee_id) {
+                $this->notifyAssigned($actor, $task);
+                $this->notifyTeam('team_assigned', $task, $actor, '“'.$task->title.'” reassigned', $this->brief($actor, $task, 'reassigned'));
+            }
+            if ($task->status !== $oldStatus && $task->is_completed) {
+                app(Notifier::class)->send($this->involved($task), 'task_completed', "“{$task->title}” was completed", 'Completed by '.$actor->name, route('tasks.show', $task), $actor);
+                $this->notifyTeam('team_completed', $task, $actor, '“'.$task->title.'” completed', $this->brief($actor, $task, 'completed'));
+            } elseif ($diff && $task->status === $oldStatus) {
+                app(Notifier::class)->send($this->involved($task), 'task_updated', "“{$task->title}” was updated", $actor->name.' changed '.implode(', ', array_keys($diff)), route('tasks.show', $task), $actor);
+                $this->notifyTeam('team_updated', $task, $actor, '“'.$task->title.'” edited', $this->brief($actor, $task, 'changed '.implode(', ', array_keys($diff))));
+            }
+
             return $task->load(['category', 'tags', 'assignee', 'owner']);
         });
     }
@@ -163,6 +182,8 @@ class TaskService
         $title = $task->title;
         $task->delete(); // soft delete: recoverable from the trash
         ActivityLogger::record($actor, $task->id, 'deleted', "Moved “{$title}” to the trash", [], $source);
+        app(Notifier::class)->send($this->involved($task), 'task_deleted', "“{$title}” was deleted", 'Moved to the trash by '.$actor->name, route('tasks.index'), $actor);
+        $this->notifyTeam('team_deleted', $task, $actor, '“'.$title.'” deleted', $this->brief($actor, $task, 'moved it to the trash'));
     }
 
     public function restore(User $actor, Task $task): Task
@@ -194,18 +215,50 @@ class TaskService
             return 0;
         }
 
-        $base = (int) $tasks->min('position');
-        DB::transaction(function () use ($ordered, $base) {
+        // Personal order: stored per user in task_orders, so nobody else's list moves.
+        $mine = DB::table('task_orders')->where('user_id', $actor->id)->whereIn('task_id', $ordered)->pluck('position', 'task_id');
+        $base = (int) collect($ordered)->map(fn ($id) => $mine[$id] ?? $tasks[$id]->position)->min();
+        DB::transaction(function () use ($ordered, $base, $actor) {
             foreach ($ordered as $i => $id) {
-                Task::whereKey($id)->update(['position' => $base + $i]);
+                DB::table('task_orders')->updateOrInsert(['user_id' => $actor->id, 'task_id' => $id], ['position' => $base + $i]);
             }
         });
-        ActivityLogger::record($actor, null, 'reordered', 'Reordered '.count($ordered).' tasks', ['ids' => $ordered]);
-
+        
         return count($ordered);
     }
 
     /* ------------------------------------------------------------------ helpers */
+
+    private function notifyAssigned(User $actor, Task $task): void
+    {
+        if ($task->assignee_id && $task->assignee_id !== $actor->id) {
+            app(Notifier::class)->send(User::find($task->assignee_id), 'task_assigned', "New task for you: “{$task->title}”", $actor->name.' assigned it to you'.($task->due_date ? ', due '.$task->due_date->format('d M') : ''), route('tasks.show', $task), $actor);
+        }
+    }
+
+    /** Managers and admins hear about everything, except what they already got personally (they are the owner/assignee). */
+    public function notifyTeam(string $event, Task $task, User $actor, string $title, string $body): void
+    {
+        if ($task->isPersonal()) {
+            return; // a member's personal task never reaches managers or the admin
+        }
+        app(Notifier::class)->team($event, $task, $title, $body, $actor, $this->involved($task));
+    }
+
+    /** "Mary completed · High priority · assigned to John · due 24 Nov" */
+    public function brief(User $actor, Task $task, string $verb): string
+    {
+        $bits = [$actor->name.' '.$verb, ucfirst($task->priority->value).' priority', $task->assignee ? 'assigned to '.$task->assignee->name : 'unassigned'];
+        if ($task->due_date) $bits[] = 'due '.$task->due_date->format('d M');
+
+        return implode(' · ', $bits);
+    }
+
+    /** Owner + assignee (the people who care about a task). */
+    private function involved(Task $task): array
+    {
+        return User::whereIn('id', array_filter([$task->user_id, $task->assignee_id]))->get()->all();
+    }
 
     /** Members can only keep a task for themselves; staff may assign to any active user. */
     private function resolveAssignee(User $actor, mixed $assigneeId): ?int

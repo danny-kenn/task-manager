@@ -91,7 +91,7 @@ class OfflineAssistant
                 .($next ? " Next due: “{$next->title}” on {$next->due_date->format('d M')}." : ''), 'proposals' => []];
         }
 
-        return ['reply' => "I can help with:\n• add task Buy milk due tomorrow priority high\n• complete #12  /  reopen #12  /  delete #12\n• show overdue  /  show pending  /  show urgent\n• summary\n\nAdd a Gemini key to .env for free-form conversation.", 'proposals' => []];
+        return ['reply' => "I can help with:\n• add task Buy milk due tomorrow priority high\n• complete #12  /  reopen #12  /  delete #12\n• show overdue  /  show pending  /  show urgent\n• summary\n\n".(app(\App\Services\Ai\GeminiClient::class)->enabled() ? 'Free-form chat is paused because the AI service could not be reached (run php artisan ai:check to see why).' : 'Add a Gemini key to .env for free-form conversation.'), 'proposals' => []];
     }
 
     private function findByTitle(User $user, string $title): ?Task

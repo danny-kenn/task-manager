@@ -45,13 +45,13 @@ class StatsService
             ->orderBy('due_date')->limit(6)->get();
 
         $recent = ActivityLog::query()->with('user')
-            ->when(! $user->isStaff(), fn ($q) => $q->where('user_id', $user->id))
+            ->when($user->isStaff(), fn ($q) => $q->withoutPersonalTasks(), fn ($q) => $q->where('user_id', $user->id))
             ->latest('id')->limit(8)->get();
 
         $workload = $user->isStaff()
             ? User::query()->where('is_active', true)->withCount([
-                'assignedTasks as pending_count' => fn ($q) => $q->where('status', 'pending'),
-                'assignedTasks as done_count' => fn ($q) => $q->where('status', 'completed'),
+                'assignedTasks as pending_count' => fn ($q) => $q->notPersonal()->where('status', 'pending'),
+                'assignedTasks as done_count' => fn ($q) => $q->notPersonal()->where('status', 'completed'),
             ])->orderByDesc('pending_count')->limit(6)->get()
             : collect();
 
