@@ -2,13 +2,29 @@
 @section('title', 'Dashboard')
 @section('heading', 'Dashboard')
 @section('content')
-<div class="page-head">
-  <div>
-    <h2>Hello, {{ explode(' ', auth()->user()->name)[0] }}</h2>
-    <p>{{ $s['pending'] }} pending · {{ $s['overdue'] }} overdue · {{ $s['due_today'] }} due today</p>
+@php($hour = (int) now()->format('G'))
+@php($greet = $hour < 12 ? 'Good morning' : ($hour < 17 ? 'Good afternoon' : 'Good evening'))
+@php($C = 2 * M_PI * 38)
+<section class="hero">
+  <div class="hero-text">
+    <span class="hero-kicker">{{ now()->format('l, j F') }}</span>
+    <h2>{{ $greet }}, {{ auth()->user()->first_name }}</h2>
+    <p>
+      @if ($s['overdue'] > 0) <b>{{ $s['overdue'] }} overdue</b> need attention. @endif
+      @if ($s['due_today'] > 0) {{ $s['due_today'] }} due today. @endif
+      @if ($s['overdue'] == 0 && $s['due_today'] == 0) Nothing urgent — a good time to get ahead. @endif
+      {{ $s['pending'] }} pending in total.
+    </p>
+    <div class="hero-actions">
+      <a href="{{ route('tasks.create') }}" class="btn btn-hero"><i class="fas fa-plus mr-1"></i> New task</a>
+      @can('use-ai')<a href="#" data-ai-open class="btn btn-hero-ghost"><svg class="tm-ai-logo" viewBox="0 0 32 32" width="1em" height="1em" fill="none"><path d="M6 17.5l6.2 6.2L22.5 11" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M25.5 3.5c.5 3 1.5 4 4.5 4.5-3 .5-4 1.5-4.5 4.5-.5-3-1.5-4-4.5-4.5 3-.5 4-1.5 4.5-4.5z" fill="currentColor"/></svg> Ask AI</a>@endcan
+    </div>
   </div>
-  <a href="{{ route('tasks.create') }}" class="btn btn-primary"><i class="fas fa-plus mr-1"></i> New task</a>
-</div>
+  <div class="hero-ring" title="{{ $s['rate'] }}% of all tasks completed">
+    <svg viewBox="0 0 96 96" width="112" height="112"><circle cx="48" cy="48" r="38" class="ring-bg"/><circle cx="48" cy="48" r="38" class="ring-fg" stroke-dasharray="{{ $C }}" stroke-dashoffset="{{ $C * (1 - $s['rate'] / 100) }}" transform="rotate(-90 48 48)"/></svg>
+    <div class="ring-n"><b>{{ $s['rate'] }}<small>%</small></b><span>done</span></div>
+  </div>
+</section>
 
 <div class="row">
   @php($cards = [
@@ -68,7 +84,7 @@
   <div class="table-responsive"><table class="table table-hover mb-0">
     <thead><tr><th>Person</th><th>Role</th><th class="text-center">Pending</th><th class="text-center">Completed</th></tr></thead>
     <tbody>@foreach ($s['workload'] as $p)
-      <tr><td><span class="avatar avatar-sm mr-2" style="background:{{ $p->avatar_color }}">{{ $p->initials }}</span>{{ $p->name }}</td>
+      <tr><td><x-avatar :user="$p" size="sm" class="mr-2" />{{ $p->name }}</td>
       <td><span class="badge badge-{{ $p->role->badge() }}">{{ $p->role->label() }}</span></td>
       <td class="text-center"><a href="{{ route('tasks.index', ['assignee' => $p->id, 'status' => 'pending']) }}">{{ $p->pending_count }}</a></td><td class="text-center">{{ $p->done_count }}</td></tr>
     @endforeach</tbody></table></div></div>
@@ -84,6 +100,7 @@
   window.refreshCharts = function () { charts.forEach(function (c) { c.destroy(); }); charts = []; draw(); };
   function draw() {
     var text = css('--text-2'), grid = css('--border'), teal = '#38a3a5';
+    ['trendChart', 'priorityChart'].forEach(function (id) { var old = Chart.getChart(id); if (old) old.destroy(); });
     Chart.defaults.color = text; Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
     charts.push(new Chart(document.getElementById('trendChart'), {
       type: 'bar',

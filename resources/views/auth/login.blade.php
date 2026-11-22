@@ -2,7 +2,7 @@
 @section('title', 'Sign in')
 @section('subtitle', 'Sign in to manage your tasks')
 @section('content')
-<form method="POST" action="{{ route('login.attempt') }}" novalidate class="once">
+<form method="POST" action="{{ route('login.attempt') }}" novalidate class="once" data-no-ajax>
   @csrf
   <div class="form-group">
     <label for="email">Email</label>
@@ -11,7 +11,7 @@
   </div>
   <div class="form-group">
     <label for="password">Password</label>
-    <input type="password" id="password" name="password" class="form-control @error('password') is-invalid @enderror" autocomplete="current-password" required>
+    <div class="pass-wrap"><input type="password" id="password" name="password" class="form-control @error('password') is-invalid @enderror" autocomplete="current-password" required><button type="button" data-toggle-pass="#password" aria-label="Show password"><i class="fas fa-eye"></i></button></div>
     @error('password')<div class="invalid-feedback">{{ $message }}</div>@enderror
   </div>
   <div class="custom-control custom-checkbox mb-3">

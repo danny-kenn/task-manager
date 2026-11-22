@@ -31,14 +31,14 @@
         @if ($task->subtasks->count())<div class="progress mb-3" style="height:8px"><div class="progress-bar" style="width:{{ $task->progress }}%"></div></div>@endif
         @forelse ($task->subtasks as $st)
           <div class="sub-item {{ $st->is_done ? 'done' : '' }}">
-            @can('update', $task)
+            @can('work', $task)
               <form method="POST" action="{{ route('subtasks.toggle', [$task, $st]) }}">@csrf @method('PATCH')<button class="check-btn {{ $st->is_done ? '' : '' }}" style="{{ $st->is_done ? 'background:#28a745;border-color:#28a745;color:#fff' : '' }}" title="Toggle"><i class="fas fa-check"></i></button></form>
             @endcan
             <span class="flex-fill">{{ $st->title }}</span>
-            @can('update', $task)<form method="POST" action="{{ route('subtasks.destroy', [$task, $st]) }}">@csrf @method('DELETE')<button class="btn btn-sm btn-link text-muted" title="Remove"><i class="fas fa-xmark"></i></button></form>@endcan
+            @can('work', $task)<form method="POST" action="{{ route('subtasks.destroy', [$task, $st]) }}">@csrf @method('DELETE')<button class="btn btn-sm btn-link text-muted" title="Remove"><i class="fas fa-xmark"></i></button></form>@endcan
           </div>
         @empty <p class="text-muted mb-2">Break the task into small steps.</p> @endforelse
-        @can('update', $task)
+        @can('work', $task)
           <form method="POST" action="{{ route('subtasks.store', $task) }}" class="mt-3">@csrf
             <div class="input-group"><input name="title" class="form-control @error('title') is-invalid @enderror" placeholder="Add a checklist item…" maxlength="150" value="{{ old('title') }}">
             <div class="input-group-append"><button class="btn btn-primary" type="submit"><i class="fas fa-plus"></i></button></div></div>
@@ -51,7 +51,7 @@
       <div class="card-body">
         @forelse ($task->comments as $c)
           <div class="comment">
-            <span class="avatar" style="background:{{ $c->author->avatar_color }}">{{ $c->author->initials }}</span>
+            <x-avatar :user="$c->author" size="md" />
             <div class="flex-fill"><strong>{{ $c->author->name }}</strong> <small>· {{ $c->created_at->diffForHumans() }}</small>
               <div>{!! nl2br(e($c->body)) !!}</div></div>
             @if (auth()->user()->isStaff() || $c->user_id === auth()->id())
@@ -74,8 +74,8 @@
         <dt>Priority</dt><dd>{{ $task->priority->label() }}</dd>
         <dt>Due</dt><dd>{{ $task->due_date ? $task->due_date->format('D, d M Y') : '—' }}</dd>
         <dt>Category</dt><dd>@if ($task->category)<span class="dot" style="background:{{ $task->category->color }}"></span> {{ $task->category->name }}@else — @endif</dd>
-        <dt>Owner</dt><dd>{{ $task->owner->name }}</dd>
-        <dt>Assignee</dt><dd>{{ $task->assignee?->name ?? 'Unassigned' }}</dd>
+        <dt>Owner</dt><dd><x-avatar :user="$task->owner" size="sm" /> {{ $task->owner->name }}</dd>
+        <dt>Assignee</dt><dd>@if ($task->assignee)<x-avatar :user="$task->assignee" size="sm" /> {{ $task->assignee->name }}@else Unassigned @endif</dd>
         <dt>Created</dt><dd>{{ $task->created_at->format('d M Y, H:i') }}</dd>
         <dt>Updated</dt><dd>{{ $task->updated_at->diffForHumans() }}</dd>
         @if ($task->completed_at)<dt>Completed</dt><dd>{{ $task->completed_at->format('d M Y, H:i') }}</dd>@endif

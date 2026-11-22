@@ -2,7 +2,7 @@
 @section('title', 'Create account')
 @section('subtitle', 'Create your account')
 @section('content')
-<form method="POST" action="{{ route('register.store') }}" novalidate class="once">
+<form method="POST" action="{{ route('register.store') }}" novalidate class="once" data-no-ajax>
   @csrf
   <div class="form-group">
     <label for="name">Full name</label>
@@ -16,7 +16,7 @@
   </div>
   <div class="form-group">
     <label for="password">Password</label>
-    <input type="password" id="password" name="password" class="form-control @error('password') is-invalid @enderror" autocomplete="new-password" required>
+    <div class="pass-wrap"><input type="password" id="password" name="password" class="form-control @error('password') is-invalid @enderror" autocomplete="new-password" required><button type="button" data-toggle-pass="#password" aria-label="Show password"><i class="fas fa-eye"></i></button></div>
     <small class="form-text">At least 8 characters with letters and numbers.</small>
     @error('password')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
   </div>

@@ -17,7 +17,7 @@
     <td>{{ $l->description }} @if ($l->task_id)<a href="{{ route('tasks.show', $l->task_id) }}" class="small">#{{ $l->task_id }}</a>@endif
       @if ($l->properties && $l->action === 'updated')<br><small class="mono">@foreach ($l->properties as $k => $v)@if (is_array($v)){{ $k }}: {{ $v['from'] ?? '∅' }} → {{ $v['to'] ?? '∅' }}@if (! $loop->last) · @endif @endif @endforeach</small>@endif</td>
     <td>{{ $l->user?->name ?? 'System' }}</td>
-    <td>@if ($l->source === 'ai')<span class="badge" style="background:var(--gold);color:#1a1500"><i class="fas fa-wand-magic-sparkles"></i> AI</span>@else<span class="badge badge-soft">Web</span>@endif</td>
+    <td>@if ($l->source === 'ai')<span class="badge" style="background:var(--gold);color:#1a1500"><svg class="tm-ai-logo" viewBox="0 0 32 32" width="1em" height="1em" fill="none" aria-hidden="true"><path d="M6 17.5l6.2 6.2L22.5 11" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M25.5 3.5c.5 3 1.5 4 4.5 4.5-3 .5-4 1.5-4.5 4.5-.5-3-1.5-4-4.5-4.5 3-.5 4-1.5 4.5-4.5z" fill="currentColor"/></svg> AI</span>@else<span class="badge badge-soft">Web</span>@endif</td>
     <td title="{{ $l->created_at->format('d M Y H:i:s') }}">{{ $l->created_at->diffForHumans() }}</td></tr>
   @empty <tr><td colspan="5" class="text-center text-muted py-4">Nothing logged yet.</td></tr> @endforelse</tbody></table></div>
   <div class="card-footer">{{ $logs->links() }}</div></div>

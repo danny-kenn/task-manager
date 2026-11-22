@@ -2,11 +2,11 @@
 @section('title', 'Trash')
 @section('heading', 'Trash')
 @section('content')
-<div class="page-head"><div><h2>Trash</h2><p>Deleted tasks stay here until restored{{ auth()->user()->isAdmin() ? ' or permanently removed' : '' }}.</p></div></div>
+<div class="page-head"><div><h2>Trash</h2><p>{{ auth()->user()->isStaff() ? 'Your deleted tasks and your team\'s work tasks.' : 'Only you can see your deleted tasks.' }} They are removed for good after 30 days; restore or delete them sooner here.</p></div></div>
 <div class="card">
   @if ($tasks->count())
   <div class="table-responsive"><table class="table table-hover mb-0">
-    <thead><tr><th>Task</th><th>Owner</th><th>Deleted</th><th class="text-right">Actions</th></tr></thead>
+    <thead><tr><th>Task</th><th>Created by</th><th>Deleted</th><th class="text-right">Actions</th></tr></thead>
     <tbody>@foreach ($tasks as $t)
       <tr><td>{{ $t->title }}</td><td>{{ $t->owner?->name }}</td><td>{{ $t->deleted_at->diffForHumans() }}</td>
       <td class="text-right">

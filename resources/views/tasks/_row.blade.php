@@ -18,7 +18,8 @@
       @if ($task->category)<span class="chip"><span class="dot" style="background:{{ $task->category->color }}"></span>{{ $task->category->name }}</span>@endif
       @if ($task->subtasks_count)<span class="chip"><i class="far fa-square-check"></i> {{ $task->subtasks_done_count }}/{{ $task->subtasks_count }}</span>@endif
       @if ($task->comments_count)<span class="chip"><i class="far fa-comment"></i> {{ $task->comments_count }}</span>@endif
-      @if ($task->assignee && ($task->assignee_id !== auth()->id()))<span class="chip" title="Assigned to {{ $task->assignee->name }}"><span class="avatar avatar-sm" style="background:{{ $task->assignee->avatar_color }}">{{ $task->assignee->initials }}</span>{{ $task->assignee->name }}</span>@endif
+      @if ($task->assignee && ($task->assignee_id !== auth()->id()))<span class="chip" title="Assigned to {{ $task->assignee->name }}"><x-avatar :user="$task->assignee" size="sm" />{{ $task->assignee->first_name }}</span>@endif
+      @if ($task->owner && $task->user_id !== auth()->id() && $task->user_id !== $task->assignee_id)<span class="chip" title="Created by {{ $task->owner->name }}"><i class="far fa-user"></i><x-avatar :user="$task->owner" size="sm" /></span>@endif
       @foreach ($task->tags->take(3) as $tag)<a class="tag-chip" href="{{ route('tasks.index', ['tag' => $tag->slug]) }}">#{{ $tag->name }}</a>@endforeach
     </div>
   </div>

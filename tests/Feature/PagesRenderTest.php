@@ -35,7 +35,7 @@ class PagesRenderTest extends TestCase
         }
 
         $admin = User::where('email', 'admin@taskmanager.test')->first();
-        foreach (['/users', '/users/create', '/users/'.$admin->id.'/edit', '/users?role=member&q=a'] as $url) {
+        foreach (['/users', '/users/create', '/users/'.User::where('email', 'member@taskmanager.test')->first()->id.'/edit', '/users?role=member&q=a'] as $url) {
             $this->actingAs($admin)->get($url)->assertOk();
         }
         $this->actingAs($admin)->get('/tasks/trash')->assertSee('In the bin');

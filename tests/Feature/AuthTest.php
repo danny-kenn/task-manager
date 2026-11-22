@@ -46,7 +46,11 @@ class AuthTest extends TestCase
         $this->assertSame(UserRole::Admin, User::first()->role);
         $this->post('/logout');
         $this->post('/register', ['name' => 'Second', 'email' => 's@t.test', 'password' => 'secret123', 'password_confirmation' => 'secret123']);
-        $this->assertSame(UserRole::Member, User::where('email', 's@t.test')->first()->role);
+        $second = User::where('email', 's@t.test')->first();
+        $this->assertSame(UserRole::Member, $second->role);
+        $this->assertFalse($second->is_active); // waits for approval
+        $this->assertGuest();
+        $this->post('/login', ['email' => 's@t.test', 'password' => 'secret123'])->assertSessionHasErrors('email');
     }
 
     public function test_registration_validates_input(): void

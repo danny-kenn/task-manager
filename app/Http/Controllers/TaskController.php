@@ -44,9 +44,16 @@ class TaskController extends Controller
         return view('tasks.create', $this->formData() + ['task' => new Task(['status' => TaskStatus::Pending, 'priority' => TaskPriority::Medium])]);
     }
 
-    public function store(TaskRequest $request): RedirectResponse
+    public function store(TaskRequest $request): RedirectResponse|JsonResponse
     {
         $task = $this->tasks->create($request->user(), $request->validated());
+
+        if ($request->expectsJson()) {
+            $task->loadCount(['subtasks', 'subtasks as subtasks_done_count' => fn ($s) => $s->where('is_done', true), 'comments']);
+
+            return response()->json(['ok' => true, 'message' => "Task “{$task->title}” added.", 'id' => $task->id,
+                'html' => view('tasks._row', ['task' => $task, 'canDrag' => false, 'statusFilter' => null])->render()], 201);
+        }
 
         return redirect()->route('tasks.show', $task)->with('success', "Task “{$task->title}” created.");
     }
@@ -120,7 +127,10 @@ class TaskController extends Controller
     public function trash(Request $request)
     {
         abort_unless($request->user()->can('view-trash'), 403);
-        $tasks = Task::onlyTrashed()->with(['owner', 'category'])->latest('deleted_at')->paginate(10);
+        $me = $request->user();
+        $tasks = Task::onlyTrashed()->with(['owner', 'category'])
+            ->where(fn ($q) => $me->isStaff() ? $q->notPersonal()->orWhere('tasks.user_id', $me->id) : $q->where('tasks.user_id', $me->id))
+            ->latest('deleted_at')->paginate(10);
 
         return view('tasks.trash', compact('tasks'));
     }

@@ -5,11 +5,28 @@
 @php($f = $filters)
 <div class="page-head">
   <div><h2>My tasks</h2><p>{{ auth()->user()->isStaff() ? 'Every task in the workspace.' : 'Tasks you own or that are assigned to you.' }}</p></div>
-  <a href="{{ route('tasks.create') }}" class="btn btn-primary"><i class="fas fa-plus mr-1"></i> New task</a>
+  <div class="d-flex" style="gap:.5rem">
+    <div class="dropdown">
+      <button class="btn btn-light dropdown-toggle" data-toggle="dropdown" type="button"><i class="fas fa-file-export mr-1"></i> Export</button>
+      <div class="dropdown-menu dropdown-menu-right">
+        @foreach (['csv' => ['CSV', 'fa-file-csv'], 'xlsx' => ['Excel', 'fa-file-excel'], 'docx' => ['Word', 'fa-file-word'], 'pdf' => ['PDF', 'fa-file-pdf']] as $fmt => [$lbl, $ic])
+          <a class="dropdown-item" data-no-ajax target="_blank" href="{{ \App\Services\ReportService::url('tasks', $fmt, collect($f)->except('sort')->all()) }}"><i class="fas {{ $ic }} mr-2"></i>{{ $lbl }}</a>
+        @endforeach
+      </div>
+    </div>
+    <a href="{{ route('tasks.create') }}" class="btn btn-primary d-none d-lg-inline-flex align-items-center"><i class="fas fa-plus mr-1"></i> New task</a>
+  </div>
 </div>
 
+<form class="card quick-add mb-3" id="quickAdd" action="{{ route('tasks.store') }}" method="POST" data-no-ajax>
+  <i class="fas fa-bolt qa-ic"></i>
+  <input name="title" class="form-control" placeholder="Quick add: type a task and press Enter…" maxlength="150" autocomplete="off" aria-label="Quick add a task">
+  <select name="priority" class="custom-select custom-select-sm d-none d-sm-block" aria-label="Priority">@foreach (\App\Enums\TaskPriority::cases() as $p)<option value="{{ $p->value }}" @selected($p->value === 'medium')>{{ $p->label() }}</option>@endforeach</select>
+  <button class="btn btn-primary btn-sm" type="submit"><i class="fas fa-plus"></i></button>
+</form>
+
 <div class="card mb-3">
-  <form method="GET" action="{{ route('tasks.index') }}" class="toolbar">
+  <form method="GET" action="{{ route('tasks.index') }}" class="toolbar" data-live="#taskResults">
     <div class="form-row align-items-center">
       <div class="col-12 col-md mb-2 mb-md-0">
         <div class="input-group">
@@ -25,13 +42,13 @@
       </div>
       <div class="col-6 col-md-auto mb-2 mb-md-0">
         <select name="sort" class="custom-select" onchange="this.form.submit()" aria-label="Sort">
-          @foreach (['manual' => 'My order (drag)', 'newest' => 'Newest first', 'oldest' => 'Oldest first', 'due' => 'Due date', 'priority' => 'Priority', 'title' => 'Title A–Z'] as $k => $v)<option value="{{ $k }}" @selected(($f['sort'] ?? 'manual') === $k)>{{ $v }}</option>@endforeach
+          @foreach (['manual' => 'My order (drag)', 'newest' => 'Newest first', 'oldest' => 'Oldest first', 'smart' => 'Smart: overdue, then most urgent', 'due' => 'Due date', 'priority' => 'Priority', 'title' => 'Title A–Z'] as $k => $v)<option value="{{ $k }}" @selected(($f['sort'] ?? 'manual') === $k)>{{ $v }}</option>@endforeach
         </select>
       </div>
       <div class="col-auto">
-        <button class="btn btn-primary" type="submit">Search</button>
+        <button class="btn btn-primary d-none d-md-inline-block" type="submit">Search</button>
         <button class="btn btn-light" type="button" id="filterToggle" title="More filters"><i class="fas fa-sliders"></i></button>
-        @if ($hasFilters)<a class="btn btn-light" href="{{ route('tasks.index') }}" title="Clear filters"><i class="fas fa-xmark"></i></a>@endif
+        <a class="btn btn-light {{ $hasFilters ? '' : 'd-none' }}" id="clearFilters" href="{{ route('tasks.index') }}" title="Clear filters"><i class="fas fa-xmark"></i></a>
       </div>
     </div>
     <div class="collapse {{ collect($f)->only(['priority', 'category_id', 'assignee', 'due', 'tag'])->filter()->isNotEmpty() ? 'show' : '' }}" id="filters">
@@ -49,6 +66,7 @@
   </form>
 </div>
 
+<div id="taskResults">
 <div class="card">
   @if ($tasks->count())
     <ul class="task-list" id="taskList" data-sortable="{{ $canDrag ? '1' : '0' }}" data-reorder-url="{{ route('tasks.reorder') }}">
@@ -70,5 +88,6 @@
       @endif
     </div>
   @endif
+</div>
 </div>
 @endsection

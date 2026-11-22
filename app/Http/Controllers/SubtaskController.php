@@ -11,7 +11,7 @@ class SubtaskController extends Controller
 {
     public function store(Request $request, Task $task): RedirectResponse
     {
-        $this->authorize('update', $task);
+        $this->authorize('work', $task);
         $data = $request->validate(['title' => ['required', 'string', 'min:2', 'max:150']], [
             'title.required' => 'Write a checklist item first.',
         ]);
@@ -22,7 +22,7 @@ class SubtaskController extends Controller
 
     public function toggle(Task $task, Subtask $subtask): RedirectResponse
     {
-        $this->authorize('update', $task);
+        $this->authorize('work', $task);
         abort_unless($subtask->task_id === $task->id, 404);
         $subtask->update(['is_done' => ! $subtask->is_done]);
 
@@ -31,7 +31,7 @@ class SubtaskController extends Controller
 
     public function destroy(Task $task, Subtask $subtask): RedirectResponse
     {
-        $this->authorize('update', $task);
+        $this->authorize('work', $task);
         abort_unless($subtask->task_id === $task->id, 404);
         $subtask->delete();
 

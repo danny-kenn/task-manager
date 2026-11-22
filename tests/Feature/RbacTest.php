@@ -119,4 +119,62 @@ class RbacTest extends TestCase
         $this->actingAs($mgr)->delete("/categories/{$c->id}")->assertRedirect();
         $this->assertSame(0, Category::count());
     }
+
+    public function test_assignee_cannot_edit_details_but_can_work(): void
+    {
+        $me = User::factory()->create();
+        $task = Task::factory()->pending()->for(User::factory()->manager()->create(), 'owner')->create(['assignee_id' => $me->id]);
+        $this->actingAs($me)->put("/tasks/{$task->id}", ['title' => 'Changed', 'status' => 'pending', 'priority' => 'low'])->assertForbidden();
+        $this->actingAs($me)->post("/tasks/{$task->id}/subtasks", ['title' => 'Step one'])->assertRedirect();
+    }
+
+    public function test_only_one_admin_and_manager_limits(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $manager = User::factory()->manager()->create();
+        $member = User::factory()->create();
+        $this->actingAs($admin)->post('/users', ['name' => 'Second Admin', 'email' => 's@x.test', 'password' => 'password1', 'role' => 'admin'])->assertSessionHasErrors('role');
+        $this->actingAs($manager)->post('/users', ['name' => 'New Mgr', 'email' => 'm@x.test', 'password' => 'password1', 'role' => 'manager'])->assertSessionHasErrors('role');
+        $this->actingAs($manager)->get("/users/{$admin->id}/edit")->assertForbidden();
+        $this->actingAs($manager)->delete("/users/{$member->id}")->assertForbidden();
+        $this->actingAs($admin)->delete("/users/{$admin->id}")->assertForbidden();
+    }
+
+    public function test_each_person_keeps_their_own_order(): void
+    {
+        $a = User::factory()->create();
+        $tasks = Task::factory()->count(3)->for($a, 'owner')->create();
+        $svc = app(\App\Services\TaskService::class);
+        $ids = $tasks->pluck('id')->all();
+        $svc->reorder($a, array_reverse($ids));
+        $first = $svc->query($a, [])->first()->id;
+        $this->assertSame(end($ids), $first);
+    }
+
+    public function test_members_personal_tasks_are_invisible_to_staff_and_deleted_ones_are_theirs(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $me = User::factory()->create();
+        $mine = Task::factory()->for($me, 'owner')->create(['title' => 'My private errand', 'assignee_id' => $me->id]);
+        $this->actingAs($admin)->get('/tasks')->assertDontSee('My private errand');
+        $this->actingAs($admin)->get("/tasks/{$mine->id}")->assertForbidden();
+
+        $this->actingAs($me)->delete("/tasks/{$mine->id}")->assertRedirect();
+        $this->assertSame(0, \App\Models\AppNotification::where('user_id', $admin->id)->count());
+        $this->actingAs($admin)->get('/tasks/trash')->assertDontSee('My private errand');
+        $this->actingAs($admin)->post("/tasks/{$mine->id}/restore")->assertForbidden();
+        $this->actingAs($me)->get('/tasks/trash')->assertSee('My private errand');
+        $this->actingAs($me)->post("/tasks/{$mine->id}/restore")->assertRedirect();
+        $this->assertNull($mine->fresh()->deleted_at);
+    }
+
+    public function test_deleting_a_user_hands_their_work_tasks_to_the_admin(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $mgr = User::factory()->manager()->create();
+        $member = User::factory()->create();
+        $work = Task::factory()->for($mgr, 'owner')->create(['assignee_id' => $member->id]);
+        $this->actingAs($admin)->delete("/users/{$mgr->id}")->assertRedirect();
+        $this->assertSame($admin->id, $work->fresh()->user_id);
+    }
 }

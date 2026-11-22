@@ -1,7 +1,7 @@
-{{-- ONE shared confirmation modal. Any element with data-delete-url / data-delete-name opens it. --}}
+{{-- ONE shared confirmation modal. Any element with data-delete-url / data-delete-name opens it; submitted over AJAX. --}}
 <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteTitle" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered" role="document">
-    <form class="modal-content" id="deleteForm" method="POST" action="#">
+    <form class="modal-content" id="deleteForm" method="POST" action="#" data-custom>
       @csrf @method('DELETE')
       <div class="modal-header">
         <h5 class="modal-title" id="deleteTitle"><i class="fas fa-triangle-exclamation text-danger mr-2"></i>Delete this?</h5>
