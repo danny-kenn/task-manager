@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -14,6 +15,16 @@ class ActivityLog extends Model
     protected function casts(): array
     {
         return ['properties' => 'array', 'created_at' => 'datetime'];
+    }
+
+    /** What staff may read: everything except activity on a member's personal tasks. */
+    public function scopeWithoutPersonalTasks(Builder $q): Builder
+    {
+        return $q->where(fn (Builder $w) => $w->whereNull('task_id')->orWhereNotIn('task_id', function ($s) {
+            $s->select('t.id')->from('tasks as t')
+                ->whereIn('t.user_id', fn ($u) => $u->select('id')->from('users')->where('role', 'member'))
+                ->where(fn ($a) => $a->whereNull('t.assignee_id')->orWhereColumn('t.assignee_id', 't.user_id'));
+        }));
     }
 
     public function user(): BelongsTo

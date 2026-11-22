@@ -20,11 +20,13 @@ class AppServiceProvider extends ServiceProvider
         Paginator::useBootstrapFour();
 
         // Coarse-grained, role-based abilities (task-level rules live in App\Policies\TaskPolicy).
-        Gate::define('manage-users', fn (User $u) => $u->isAdmin());
+        Gate::define('manage-users', fn (User $u) => $u->isStaff());                       // open the Users page
+        Gate::define('manage-user', fn (User $u, User $target) => $u->canManageUser($target)); // act on one person
+        Gate::define('delete-user', fn (User $u, User $target) => $u->isAdmin() && $u->canManageUser($target));
         Gate::define('manage-categories', fn (User $u) => $u->isStaff());
         Gate::define('view-activity', fn (User $u) => $u->isStaff());
         Gate::define('assign-tasks', fn (User $u) => $u->isStaff());
-        Gate::define('view-trash', fn (User $u) => $u->isStaff());
+        Gate::define('view-trash', fn (User $u) => $u->is_active);
         Gate::define('use-ai', fn (User $u) => $u->is_active);
     }
 }

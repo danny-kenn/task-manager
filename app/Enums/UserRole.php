@@ -23,9 +23,9 @@ enum UserRole: string
     public function description(): string
     {
         return match ($this) {
-            self::Admin => 'Full access: every task, every user, categories, trash and the audit log.',
-            self::Manager => 'Sees and manages every task, assigns work to members, manages categories and the audit log.',
-            self::Member => 'Manages their own tasks and the tasks assigned to them.',
+            self::Admin => 'The one owner account: everything, including managers, the trash and the audit log. Cannot be created, changed or deleted by anyone else.',
+            self::Manager => 'Oversees the whole team: sees every task, assigns work, manages categories, approves and manages members.',
+            self::Member => 'Private workspace: edits their own tasks; for tasks assigned to them they can complete, tick the checklist and comment.',
         };
     }
 

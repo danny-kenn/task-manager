@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\TaskPriority;
+use App\Enums\UserRole;
 use App\Enums\TaskStatus;
 use Database\Factories\TaskFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -99,10 +100,34 @@ class Task extends Model
     public function scopeVisibleTo(Builder $q, User $user): Builder
     {
         if ($user->isStaff()) {
-            return $q;
+            // Staff oversee all WORK tasks, but never a member's personal ones.
+            return $q->where(fn (Builder $w) => $w->notPersonal()->orWhere('tasks.user_id', $user->id));
         }
 
         return $q->where(fn (Builder $w) => $w->where('user_id', $user->id)->orWhere('assignee_id', $user->id));
+    }
+
+    /** Personal = created by a member for themselves (not assigned to anyone else). Private to that member. */
+    public function scopeNotPersonal(Builder $q): Builder
+    {
+        return $q->whereNot(fn (Builder $w) => $w
+            ->whereIn('tasks.user_id', fn ($s) => $s->select('id')->from('users')->where('role', UserRole::Member->value))
+            ->where(fn (Builder $a) => $a->whereNull('tasks.assignee_id')->orWhereColumn('tasks.assignee_id', 'tasks.user_id')));
+    }
+
+    public function isPersonal(): bool
+    {
+        $owner = $this->relationLoaded('owner') ? $this->owner : $this->owner()->first();
+
+        return $owner !== null && $owner->role === UserRole::Member
+            && ($this->assignee_id === null || $this->assignee_id === $this->user_id);
+    }
+
+    /** Each person's own manual order (falls back to the shared default until they drag something). */
+    public function scopeManualOrderFor(Builder $q, User $user): Builder
+    {
+        return $q->orderByRaw('coalesce((select o.position from task_orders o where o.task_id = tasks.id and o.user_id = ?), tasks.position) asc', [$user->id])
+            ->orderByDesc('tasks.id');
     }
 
     public function scopeSearch(Builder $q, ?string $term): Builder
