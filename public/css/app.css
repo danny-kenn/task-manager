@@ -368,3 +368,5 @@ body.ai-open { overflow: hidden; }
   .modal-body { overflow-y: auto; -webkit-overflow-scrolling: touch; }
   .modal-footer { flex-wrap: nowrap; gap: .5rem; } .modal-footer .btn { flex: 1; margin: 0; }
 }
+/* modals must sit above the floating bottom nav (z 1500) and the AI panel (z 1600) */
+.modal-backdrop { z-index: 2090; } .modal { z-index: 2100; }
