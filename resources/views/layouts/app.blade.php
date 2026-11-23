@@ -48,13 +48,14 @@ window.TMCFG = {
 <link rel="stylesheet" href="{{ asset('css/tour.css') }}?v={{ filemtime(public_path('css/tour.css')) }}">
 </head>
 <body class="has-bottom-nav">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs><mask id="tmLogoMask" maskUnits="userSpaceOnUse" x="0" y="0" width="32" height="32"><rect width="32" height="32" fill="#fff"/><path d="M9.4 16.4l3 3 5.8-5.8" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="25" cy="7" r="6.6" fill="#000"/></mask></defs><symbol id="tm-logo" viewBox="0 0 32 32"><path mask="url(#tmLogoMask)" fill="currentColor" d="M8 7h12a6 6 0 0 1 6 6v6a6 6 0 0 1-6 6h-7.5L6.5 29.5V24.6A6 6 0 0 1 2 19v-6a6 6 0 0 1 6-6z"/><path fill="#f2c94c" d="M25 1.8l1.4 3.8L30.2 7l-3.8 1.4L25 12.2l-1.4-3.8L19.8 7l3.8-1.4z"/></symbol></svg>
 <div class="progress-line" id="progressLine"></div>
 <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
 {{-- ============================================================ desktop sidebar --}}
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-brand">
-    <div class="brand-title"><span class="brand-mark"><svg viewBox="0 0 32 32" width="18" height="18" fill="none"><path d="M7 17l6 6 12-13" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>{{ config('app.name') }}</div>
+    <div class="brand-title"><span class="brand-mark"><svg viewBox="0 0 32 32" width="22" height="22" aria-hidden="true" style="color:#fff"><use href="#tm-logo"/></svg></span>{{ config('app.name') }}</div>
     <a href="{{ route('profile.edit') }}" class="brand-me">
       <x-avatar :user="$u" size="md" data-self />
       <span class="brand-me-text"><span class="brand-user">{{ $u->name }}</span><span class="role-pill">{{ $u->role->label() }}</span></span>
@@ -80,7 +81,7 @@ window.TMCFG = {
     <div class="nav-label">Account</div>
     <a class="s-link" data-nav-routes="profile.edit" href="{{ route('profile.edit') }}"><i class="fas fa-user-gear"></i> My profile</a>
     <a class="s-link" href="#" data-notif-open><i class="fas fa-bell"></i> Notifications <span class="badge badge-pill badge-gold ml-auto d-none" data-unread-badge></span></a>
-    @can('use-ai')<a class="s-link" href="#" data-ai-open id="openAiSide"><svg class="tm-ai-logo" viewBox="0 0 32 32" width="1em" height="1em" fill="none" aria-hidden="true"><path d="M6 17.5l6.2 6.2L22.5 11" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M25.5 3.5c.5 3 1.5 4 4.5 4.5-3 .5-4 1.5-4.5 4.5-.5-3-1.5-4-4.5-4.5 3-.5 4-1.5 4.5-4.5z" fill="currentColor"/></svg> AI assistant</a>@endcan
+    @can('use-ai')<a class="s-link" href="#" data-ai-open id="openAiSide"><svg class="tm-ai-logo" viewBox="0 0 32 32" width="1em" height="1em" aria-hidden="true"><use href="#tm-logo"/></svg> AI assistant</a>@endcan
     <a class="s-link d-none" href="#" data-install><i class="fas fa-download"></i> Install app</a>
   </nav>
   <div class="sidebar-foot">Plan it · Do it · Ask AI</div>
@@ -125,7 +126,7 @@ window.TMCFG = {
   <a class="bn-item" data-nav-routes="dashboard" href="{{ route('dashboard') }}"><i class="fas fa-chart-pie"></i><span>Home</span></a>
   <a class="bn-item" data-nav-routes="tasks.index,tasks.show,tasks.edit,tasks.create" data-nav-not="assignee=me" href="{{ route('tasks.index') }}"><i class="fas fa-list-check"></i><span>Tasks</span></a>
   @can('use-ai')
-    <button class="bn-ai" type="button" data-ai-open aria-label="AI assistant"><svg class="tm-ai-logo" viewBox="0 0 32 32" width="1em" height="1em" fill="none" aria-hidden="true"><path d="M6 17.5l6.2 6.2L22.5 11" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M25.5 3.5c.5 3 1.5 4 4.5 4.5-3 .5-4 1.5-4.5 4.5-.5-3-1.5-4-4.5-4.5 3-.5 4-1.5 4.5-4.5z" fill="currentColor"/></svg></button>
+    <button class="bn-ai" type="button" data-ai-open aria-label="AI assistant"><svg class="tm-ai-logo" viewBox="0 0 32 32" width="1em" height="1em" aria-hidden="true"><use href="#tm-logo"/></svg></button>
   @else
     <a class="bn-ai" href="{{ route('tasks.create') }}" aria-label="New task"><i class="fas fa-plus"></i></a>
   @endcan

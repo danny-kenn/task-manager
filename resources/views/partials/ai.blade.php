@@ -1,5 +1,5 @@
 {{-- AI assistant: right-side panel on desktop, full-screen app screen on mobile. Opened by any [data-ai-open] element. --}}
-<button class="ai-fab" id="aiFab" type="button" data-ai-open title="AI assistant" aria-label="Open AI assistant"><svg class="tm-ai-logo" viewBox="0 0 32 32" width="1em" height="1em" fill="none" aria-hidden="true"><path d="M6 17.5l6.2 6.2L22.5 11" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M25.5 3.5c.5 3 1.5 4 4.5 4.5-3 .5-4 1.5-4.5 4.5-.5-3-1.5-4-4.5-4.5 3-.5 4-1.5 4.5-4.5z" fill="currentColor"/></svg></button>
+<button class="ai-fab" id="aiFab" type="button" data-ai-open title="AI assistant" aria-label="Open AI assistant"><svg class="tm-ai-logo" viewBox="0 0 32 32" width="1em" height="1em" aria-hidden="true"><use href="#tm-logo"/></svg></button>
 <section class="ai-panel" id="aiPanel" aria-label="AI assistant" aria-hidden="true"
   data-history="{{ route('ai.history') }}" data-conversations="{{ route('ai.conversations') }}" data-conv-base="{{ url('/ai/conversations') }}"
   data-stream="{{ route('ai.stream') }}" data-exec="{{ route('ai.execute') }}" data-clear="{{ route('ai.clear') }}"
@@ -18,7 +18,7 @@
   <div class="ai-main">
     <header class="ai-head">
       <button class="ai-ib ai-menu" type="button" id="aiMenu" aria-label="Chats"><i class="fas fa-bars"></i></button>
-      <span class="ai-gem"><svg class="tm-ai-logo" viewBox="0 0 32 32" width="1em" height="1em" fill="none" aria-hidden="true"><path d="M6 17.5l6.2 6.2L22.5 11" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M25.5 3.5c.5 3 1.5 4 4.5 4.5-3 .5-4 1.5-4.5 4.5-.5-3-1.5-4-4.5-4.5 3-.5 4-1.5 4.5-4.5z" fill="currentColor"/></svg></span>
+      <span class="ai-gem"><svg class="tm-ai-logo" viewBox="0 0 32 32" width="1em" height="1em" aria-hidden="true"><use href="#tm-logo"/></svg></span>
       <div class="ai-title"><b id="aiName">Task Assistant</b><small><i class="ai-dot" id="aiDot"></i><span id="aiMode">connecting…</span></small></div>
       <button class="ai-ib ai-newbtn" type="button" id="aiNew" title="New chat" aria-label="New chat"><i class="fas fa-pen-to-square"></i></button>
       <div class="ai-more">

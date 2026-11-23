@@ -81,7 +81,7 @@
   $('aiNew').addEventListener('click', newChat); $('aiNewSide').addEventListener('click', newChat);
 
   function hero() {
-    log.innerHTML = ''; var h = el('div', 'ai-hero', '<div class="gem"><svg class="tm-ai-logo" viewBox="0 0 32 32" width="1em" height="1em" fill="none" aria-hidden="true"><path d="M6 17.5l6.2 6.2L22.5 11" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M25.5 3.5c.5 3 1.5 4 4.5 4.5-3 .5-4 1.5-4.5 4.5-.5-3-1.5-4-4.5-4.5 3-.5 4-1.5 4.5-4.5z" fill="currentColor"/></svg></div><h2>Hi ' + esc(S.name) + ', <span>how can I help?</span></h2><p>I can look things up, draw tables, make reports, and do things for you. Anything that changes data asks you to confirm first. Send me a photo or a voice note too.</p>');
+    log.innerHTML = ''; var h = el('div', 'ai-hero', '<div class="gem"><svg class="tm-ai-logo" viewBox="0 0 32 32" width="1em" height="1em" aria-hidden="true"><use href="#tm-logo"/></svg></div><h2>Hi ' + esc(S.name) + ', <span>how can I help?</span></h2><p>I can look things up, draw tables, make reports, and do things for you. Anything that changes data asks you to confirm first. Send me a photo or a voice note too.</p>');
     var grid = el('div', 'ai-starters');
     S.starters.forEach(function (s) { var b = el('button', 'ai-starter', '<span class="ic"><i class="fas ' + esc(s.icon) + '"></i></span><span><b>' + esc(s.title) + '</b><small>' + esc(s.sub) + '</small></span>'); b.type = 'button'; b.addEventListener('click', function () { send(s.text); }); grid.appendChild(b); });
     h.appendChild(grid); log.appendChild(h);
@@ -102,7 +102,7 @@
     log.appendChild(r); return r;
   }
   function botRow() {
-    var r = el('div', 'ai-row bot'), av = el('span', 'ai-av', '<svg class="tm-ai-logo" viewBox="0 0 32 32" width="1em" height="1em" fill="none" aria-hidden="true"><path d="M6 17.5l6.2 6.2L22.5 11" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M25.5 3.5c.5 3 1.5 4 4.5 4.5-3 .5-4 1.5-4.5 4.5-.5-3-1.5-4-4.5-4.5 3-.5 4-1.5 4.5-4.5z" fill="currentColor"/></svg>'), body = el('div', 'ai-body'); r.appendChild(av); r.appendChild(body); log.appendChild(r);
+    var r = el('div', 'ai-row bot'), av = el('span', 'ai-av', '<svg class="tm-ai-logo" viewBox="0 0 32 32" width="1em" height="1em" aria-hidden="true"><use href="#tm-logo"/></svg>'), body = el('div', 'ai-body'); r.appendChild(av); r.appendChild(body); log.appendChild(r);
     return { row: r, body: body, think: null, text: null, blocks: el('div'), cards: el('div'), steps: [], raw: '', t0: Date.now(), msgId: null };
   }
   function thinkBox(b) {

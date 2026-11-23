@@ -7,7 +7,7 @@
 <title>Offline · {{ config('app.name') }}</title>
 <style>
   *{box-sizing:border-box}body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:#0d1117;color:#e6edf3;text-align:center}
-  .box{max-width:340px}.ic{width:84px;height:84px;margin:0 auto 18px;border-radius:24px;background:linear-gradient(135deg,#2c7a7b,#d4a017);display:flex;align-items:center;justify-content:center;font-size:38px}
+  .box{max-width:340px}.ic{width:84px;height:84px;margin:0 auto 18px;border-radius:24px;background:#2c7a7b;display:flex;align-items:center;justify-content:center;font-size:38px}
   h1{font-size:1.3rem;margin:0 0 8px}p{color:#9aa5b1;line-height:1.5;margin:0 0 20px}
   button{background:#2c7a7b;color:#fff;border:0;border-radius:12px;padding:12px 22px;font-size:1rem;font-weight:600;cursor:pointer}
 </style>

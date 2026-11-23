@@ -19,10 +19,11 @@
 <link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ filemtime(public_path('css/app.css')) }}">
 </head>
 <body class="guest-body">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs><mask id="tmLogoMask" maskUnits="userSpaceOnUse" x="0" y="0" width="32" height="32"><rect width="32" height="32" fill="#fff"/><path d="M9.4 16.4l3 3 5.8-5.8" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="25" cy="7" r="6.6" fill="#000"/></mask></defs><symbol id="tm-logo" viewBox="0 0 32 32"><path mask="url(#tmLogoMask)" fill="currentColor" d="M8 7h12a6 6 0 0 1 6 6v6a6 6 0 0 1-6 6h-7.5L6.5 29.5V24.6A6 6 0 0 1 2 19v-6a6 6 0 0 1 6-6z"/><path fill="#f2c94c" d="M25 1.8l1.4 3.8L30.2 7l-3.8 1.4L25 12.2l-1.4-3.8L19.8 7l3.8-1.4z"/></symbol></svg>
 <div class="auth-wrap">
   <div class="card auth-card">
     <div class="text-center mb-4">
-      <div class="auth-logo"><i class="fas fa-layer-group"></i></div>
+      <div class="auth-logo"><svg viewBox="0 0 32 32" aria-hidden="true"><use href="#tm-logo"/></svg></div>
       <div class="brand-title" style="font-size:1.15rem">{{ config('app.name') }}</div>
       <p class="text-muted mb-0 mt-1" style="font-size:.88rem">@yield('subtitle')</p>
     </div>

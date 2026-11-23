@@ -50,7 +50,7 @@ class GeminiClient
 
     public function models(): array
     {
-        return Cache::remember('gemini.models.v2', 12 * 3600, function () {
+        return Cache::remember('gemini.models.v3', 12 * 3600, function () {
             $keys = $this->keys();
             if (! $keys) {
                 return self::FALLBACK_MODELS;
@@ -75,7 +75,7 @@ class GeminiClient
                 arsort($scores);
                 $found = array_keys($scores);
                 // Speed first: these respond fastest for chat + tools; the rest follow as backups.
-                $fast = array_values(array_filter(['gemini-2.5-flash', 'gemini-flash-lite-latest', 'gemini-flash-latest'], fn ($m) => in_array($m, $found, true)));
+                $fast = array_values(array_filter(['gemini-2.5-flash', 'gemini-flash-lite-latest', 'gemini-3.1-flash-lite-preview'], fn ($m) => in_array($m, $found, true)));
 
                 return array_slice(array_values(array_unique(array_merge($fast, $found))), 0, 5) ?: self::FALLBACK_MODELS;
             } catch (\Throwable $e) {
@@ -214,9 +214,9 @@ class GeminiClient
             CURLOPT_CONNECTTIMEOUT => 20,           // slow Windows DNS counts against this, so be generous
             CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4, // XAMPP/Windows: broken IPv6 lookups cause "Could not resolve host"
             CURLOPT_DNS_CACHE_TIMEOUT => 300,
-            CURLOPT_TIMEOUT => 45,
+            CURLOPT_TIMEOUT => 90,
             CURLOPT_LOW_SPEED_LIMIT => 1,
-            CURLOPT_LOW_SPEED_TIME => 10,
+            CURLOPT_LOW_SPEED_TIME => 40,
             CURLOPT_SSL_VERIFYPEER => true,
             CURLOPT_SSL_VERIFYHOST => 2,
             CURLOPT_WRITEFUNCTION => function ($ch, $chunk) use (&$buf, &$raw, $handle) {
@@ -275,6 +275,9 @@ class GeminiClient
     {
         $this->failure = null;
         $this->modelUsed = null;
+        $fast = (bool) ($gen['_fast'] ?? false);   // lean prompt: no thought summaries, shorter answers
+        $lite = (bool) ($gen['_lite'] ?? false);   // tiny chat turn: try the lightest model first
+        unset($gen['_fast'], $gen['_lite']);
         if (! $this->enabled()) {
             $this->failure = ['category' => 'config', 'message' => 'The AI key is not configured (GEMINI_API_KEYS is empty in .env).'];
 
@@ -282,10 +285,12 @@ class GeminiClient
         }
 
         $attempts = [];
-        foreach (array_slice($this->candidates(), 0, self::MAX_ATTEMPTS) as $c) {
+        $cands = $this->candidates();
+        if ($lite) usort($cands, fn ($a, $b) => (int) str_contains($b['model'], 'lite') <=> (int) str_contains($a['model'], 'lite'));
+        foreach (array_slice($cands, 0, self::MAX_ATTEMPTS) as $c) {
             $stream = $onDelta !== null;
-            $cfg = array_merge(['temperature' => 0.3, 'maxOutputTokens' => $stream ? 3000 : 1500], $gen);
-            if ($t = $this->thinking($c['model'], $stream)) $cfg['thinkingConfig'] = $t;
+            $cfg = array_merge(['temperature' => 0.3, 'maxOutputTokens' => $fast ? 1200 : ($stream ? 3000 : 1500)], $gen);
+            if ($t = $this->thinking($c['model'], $stream && ! $fast)) $cfg['thinkingConfig'] = $t;
             $body = ['systemInstruction' => ['parts' => [['text' => $system]]], 'contents' => $contents, 'generationConfig' => $cfg];
             if ($decls) $body['tools'] = [['functionDeclarations' => $this->cleanDecls($decls)]];
 
@@ -295,7 +300,7 @@ class GeminiClient
                 $r = $this->streamRequest($url, $c['key'], $body, $onDelta);
                 if ($r['err'] !== '' && $r['http'] === 0) {
                     $attempts[] = ['model' => $c['model'], 'http' => 0, 'msg' => $r['err']];
-                    $this->block('-', $c['model'], str_contains($r['err'], 'error 28') ? 120 : 15); // a model that stalled is skipped for 2 min
+                    $this->block('-', $c['model'], str_contains($r['err'], 'error 28') ? 45 : 15); // a model that stalled is skipped for 2 min
                     AiLog::warn('gemini.network', ['model' => $c['model'], 'error' => $r['err']]);
                     continue;
                 }

@@ -17,7 +17,7 @@
     </p>
     <div class="hero-actions">
       <a href="{{ route('tasks.create') }}" class="btn btn-hero"><i class="fas fa-plus mr-1"></i> New task</a>
-      @can('use-ai')<a href="#" data-ai-open class="btn btn-hero-ghost"><svg class="tm-ai-logo" viewBox="0 0 32 32" width="1em" height="1em" fill="none"><path d="M6 17.5l6.2 6.2L22.5 11" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M25.5 3.5c.5 3 1.5 4 4.5 4.5-3 .5-4 1.5-4.5 4.5-.5-3-1.5-4-4.5-4.5 3-.5 4-1.5 4.5-4.5z" fill="currentColor"/></svg> Ask AI</a>@endcan
+      @can('use-ai')<a href="#" data-ai-open class="btn btn-hero-ghost"><svg class="tm-ai-logo" viewBox="0 0 32 32" width="1em" height="1em" aria-hidden="true"><use href="#tm-logo"/></svg> Ask AI</a>@endcan
     </div>
   </div>
   <div class="hero-ring" title="{{ $s['rate'] }}% of all tasks completed">
