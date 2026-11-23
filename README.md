@@ -27,7 +27,7 @@ A Laravel 12 + Bootstrap 4 task manager built for the practical test. All requir
 ## Scope note (read this first)
 
 The brief asks for a simple task manager. I built the required features
-first — create, list, edit, delete with a modal, completed/pending — and
+first — create, list, edit, delete with a modal, completed/pending and
 those are deliberately small and easy to follow:
 
     routes/web.php → TaskController → TaskRequest → TaskService → Task model → Blade
@@ -206,7 +206,7 @@ The history is organised in focused commits (database, auth + RBAC, task CRUD, U
 `php test_gemini.php` (or `php artisan ai:check`) tests DNS, TLS and **every key against every model**, with timings, using the same keys the app uses. Add `--quick` for a single request. Everything the assistant does (each request, lane, tool call, Gemini attempt, timing, failure reason) is written to `storage/logs/ai-YYYY-MM-DD.log` as JSON lines; the short `ref` code shown under an AI message finds its lines.
 If you see `cURL error 6 (could not resolve host)`: the app already forces IPv4 and retries; if it persists, check DNS/firewall/antivirus on the machine running PHP.
 
-## What I'd do next / what I'm not happy with
+## What I'd do next 
 
 - Per-user time zones. Right now everything is one APP_TIMEZONE; correct,
   but not what a distributed team needs.
