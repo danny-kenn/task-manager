@@ -25,9 +25,9 @@ MySQL
 ## Request examples
 **Mark completed (AJAX):** click circle → `PATCH /tasks/{id}/toggle` → `TaskPolicy::toggle` → `TaskService::setStatus` → `completed_at` set + `activity_logs` row → JSON → badge and row classes update, toast shown.
 
-**Drag-and-drop:** SortableJS `onEnd` → `POST /tasks/reorder {ids:[…]}` → `TaskService::reorder` reuses the existing `position` values of just those rows, so tasks on other pages are not disturbed.
+**Drag-and-drop:** SortableJS `onEnd` → `POST /tasks/reorder {ids:[…]}` → `TaskService::reorder` stores the new order for the signed-in user only (`task_orders`), re-using that person's existing slots, so other pages and other people's lists are not disturbed.
 
-**Delete:** button → shared Bootstrap modal → `DELETE /tasks/{id}` → soft delete → trash.
+**Delete:** button → shared Bootstrap modal → `DELETE /tasks/{id}` → soft delete → the creator's own trash (staff see work tasks only; a member's personal task is never shown to staff and triggers no staff notification). `tasks:purge-trash` removes items after 30 days.
 
 ## Error handling
 - Validation errors: inline per field + a summary box, with custom messages.

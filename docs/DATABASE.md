@@ -15,6 +15,7 @@ MySQL 8 / MariaDB (XAMPP), engine InnoDB, charset `utf8mb4`. Everything is creat
 | password | varchar(255) | bcrypt (Eloquent `hashed` cast) |
 | role | varchar(20), indexed | `admin` \| `manager` \| `member` (default `member`), cast to `UserRole` enum |
 | is_active | boolean | deactivated users are signed out on their next request |
+| approved_at | timestamp null | null + inactive = self-registered account waiting for approval |
 | avatar_color | varchar(7) | UI only |
 | last_login_at | timestamp null | |
 | remember_token, email_verified_at, timestamps | | Laravel defaults |
@@ -53,6 +54,9 @@ Categories: `name` unique, `color`, `description`, `created_by` (FK, null on del
 ### `ai_messages`
 `user_id` (cascade), `role` (`user` \| `assistant`), `content`, `proposals` (JSON action cards), `model`, `created_at`. Gives the assistant its conversation memory.
 
+### `task_orders`
+`user_id` (cascade), `task_id` (cascade), `position`; primary key `(user_id, task_id)`. Each person's own drag-and-drop order; the query falls back to `tasks.position` until someone reorders, so reordering never changes another person's list.
+
 ### Laravel framework tables
 `sessions`, `password_reset_tokens`, `cache`, `cache_locks`, `jobs`, `job_batches`, `failed_jobs`, `migrations`.
 
@@ -60,5 +64,8 @@ Categories: `name` unique, `color`, `description`, `created_by` (FK, null on del
 - **Enums stored as strings, not MySQL ENUM:** adding a status or role later is a code change, not an `ALTER TABLE`.
 - **Soft deletes on tasks only:** they are the data users care about. Comments and subtasks are removed when a task is permanently deleted.
 - **`ON DELETE` behaviour is chosen per relation:** deleting a user removes their own tasks (cascade) but only *unassigns* tasks assigned to them (set null); deleting a category leaves its tasks uncategorised.
-- **Signed `position`:** lets new tasks go to the top without renumbering every row.
+- **Signed `position`:** lets new tasks go to the top without renumbering every row. It is the shared default; personal order lives in `task_orders`.
+- **Personal tasks are derived, not stored:** a task is personal when its creator is a member and it is unassigned or assigned to themselves (`Task::scopeNotPersonal`). No extra flag can drift out of sync.
+- **Deleting a user:** work tasks they created are reassigned to the admin before deletion; only a member's personal tasks cascade away.
+- **Trash retention:** soft-deleted tasks are purged after 30 days by `tasks:purge-trash` (scheduled daily).
 - **Search** uses `LIKE` on indexed/short columns; for a very large dataset a MySQL `FULLTEXT` index would be the next step.
