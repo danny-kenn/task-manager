@@ -349,3 +349,22 @@ html[data-theme="light"] { color-scheme: light; } html[data-theme="dark"] { colo
 ::-webkit-scrollbar { width: 8px; height: 8px; } ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--text-3) 55%, transparent); border-radius: 8px; }
 body.ai-open { overflow: hidden; }
+
+/* --- fixes: the sidebar is always dark, so its text must always be light (it was invisible in light theme) */
+.sidebar .brand-title, .sidebar .brand-title span, .sidebar .brand-me .brand-user { color: #eef2f6 !important; }
+.sidebar .brand-me .role-pill { color: #f2c94c; }
+/* --- fixes: export dropdown must sit above the filter bar below it */
+.page-head { position: relative; z-index: 20; }
+.dropdown-menu { z-index: 1060; min-width: 11rem; }
+
+/* --- modals: bottom sheets on phones, normal centred modals on desktop */
+@media (max-width: 767.98px) {
+  .modal-dialog, .modal-dialog-centered { position: fixed; left: 0; right: 0; bottom: 0; margin: 0; width: 100%; max-width: 100%; min-height: 0; display: flex; align-items: flex-end; }
+  .modal.fade .modal-dialog { transform: translateY(100%); transition: transform .32s cubic-bezier(.2,.8,.2,1); }
+  .modal.show .modal-dialog { transform: none; }
+  .modal-content { width: 100%; border-radius: 22px 22px 0 0; border-bottom: 0; max-height: 88vh; display: flex; flex-direction: column; padding-bottom: env(safe-area-inset-bottom, 0px); box-shadow: 0 -12px 40px rgba(0,0,0,.35); }
+  .modal-header { position: relative; padding-top: 1.5rem; touch-action: none; }
+  .modal-header::before { content: ''; position: absolute; top: 8px; left: 50%; width: 42px; height: 4px; border-radius: 4px; background: var(--border-2); transform: translateX(-50%); }
+  .modal-body { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .modal-footer { flex-wrap: nowrap; gap: .5rem; } .modal-footer .btn { flex: 1; margin: 0; }
+}

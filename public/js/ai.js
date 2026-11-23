@@ -137,7 +137,7 @@
       w.innerHTML = '<h6>' + esc(k.title) + '</h6><div class="ai-stats">' + k.items.map(function (i) { return '<div class="ai-stat ' + esc(i.tone) + '"><small>' + esc(i.label) + '</small><b>' + esc(i.value) + '</b><span>' + esc(i.hint) + '</span></div>'; }).join('') + '</div>';
     } else if (t === 'report') {
       var L = { csv: 'CSV', xlsx: 'Excel', docx: 'Word', pdf: 'PDF', html: 'HTML', md: 'Markdown', txt: 'Text', json: 'JSON' };
-      w.innerHTML = '<div class="ai-report"><div class="h"><span class="ic"><i class="fas fa-file-export"></i></span><div><b>' + esc(k.title) + '</b><small>' + k.count + ' row' + (k.count === 1 ? '' : 's') + ' · ' + esc(k.subtitle || '') + '</small></div></div><div class="fm">' + Object.keys(k.formats).map(function (f) { return '<a class="ai-pill' + (f === k.format ? ' main' : '') + '" data-no-ajax target="_blank" href="' + esc(k.formats[f]) + '"><i class="fas fa-download"></i> ' + L[f] + '</a>'; }).join('') + '</div></div>';
+      w.innerHTML = '<div class="ai-report"><div class="h"><span class="ic"><i class="fas fa-file-export"></i></span><div><b>' + esc(k.title) + '</b><small>' + k.count + ' row' + (k.count === 1 ? '' : 's') + ' · ' + esc(k.subtitle || '') + '</small></div></div><div class="fm">' + Object.keys(k.formats).map(function (f) { return '<a class="ai-pill' + (f === k.format ? ' primary' : '') + '" data-no-ajax target="_blank" href="' + esc(k.formats[f]) + '"><i class="fas fa-download"></i> ' + L[f] + '</a>'; }).join('') + '</div></div>';
     } else if (t === 'choices') {
       w.innerHTML = '<div class="ai-choices"><p>' + esc(k.question) + '</p><div class="opts"></div></div>';
       var box = w.querySelector('.opts'), wrap = w.firstChild;

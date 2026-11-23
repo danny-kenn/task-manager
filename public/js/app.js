@@ -84,6 +84,8 @@
       if (!$new.length) { location.href = res.url; return; }
       var scroll = mode === 'keep' ? window.scrollY : 0, sy = document.scrollingElement;
       $pjax.stop(true, true).attr({ 'data-heading': $new.attr('data-heading'), 'data-route': $new.attr('data-route'), 'data-back': $new.attr('data-back') }).data({ heading: $new.attr('data-heading'), route: $new.attr('data-route'), back: $new.attr('data-back') });
+      // a Bootstrap modal that was open (e.g. edit category) leaves its dark backdrop behind when its page is swapped out
+      $('.modal-backdrop').remove(); $('body').removeClass('modal-open').css('padding-right', '');
       $pjax.html($new.html()); runScripts($pjax);
       document.title = doc.title || document.title;
       var u = abs(res.url);
@@ -302,3 +304,19 @@
   if ($pjax.length) { setActive(); history.replaceState({ pjax: 1 }, '', location.href); }
   initPage();
 })(jQuery);
+
+/* swipe a phone bottom-sheet modal down (from its header) to close it */
+(function () {
+  var y0 = null, dy = 0, $c = null;
+  $(document).on('touchstart', '.modal-header', function (e) {
+    if (window.innerWidth > 767) return;
+    $c = $(this).closest('.modal-content'); y0 = e.originalEvent.touches[0].clientY; dy = 0; $c.css('transition', 'none');
+  });
+  $(document).on('touchmove', '.modal-header', function (e) {
+    if (y0 === null) return; dy = Math.max(0, e.originalEvent.touches[0].clientY - y0); $c.css('transform', 'translateY(' + dy + 'px)');
+  });
+  $(document).on('touchend touchcancel', '.modal-header', function () {
+    if (y0 === null) return; var close = dy > 90, $m = $c.closest('.modal');
+    $c.css({ transition: '', transform: '' }); y0 = null; dy = 0; if (close) $m.modal('hide');
+  });
+})();
