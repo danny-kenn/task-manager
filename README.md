@@ -1,6 +1,19 @@
 # Task Manager
 
-A Laravel 12 + Bootstrap 4 task manager built for the practical coding test. It covers every required feature (create, view, edit, delete with a confirmation modal, completed/pending status) and all three bonus features (search, pagination, drag-and-drop), then goes further with role-based access, a service layer, an audit trail, a dashboard and an AI assistant.
+> ## Reviewer quick start (about 2 minutes)
+> Requirements: PHP 8.2+, Composer, MySQL (XAMPP is fine). Create an empty MySQL database named `task_manager`, then:
+> ```bash
+> composer install
+> copy .env.example .env        # macOS/Linux: cp .env.example .env
+> php artisan key:generate
+> php artisan migrate --seed
+> php artisan serve
+> ```
+> Open http://127.0.0.1:8000 and sign in with `admin@taskmanager.test` / `password` (manager and member accounts are in section 1).
+> The **AI assistant is optional**. With no Gemini key the whole app works normally and the assistant answers in offline mode.
+> Live demo: **https://tasks.dominium.co.ke/** (the repository is the main submission).
+
+A Laravel 12 + Bootstrap 4 task manager built for the practical test. All required features and all three bonus features are done. I also added role-based access, an audit trail and an AI assistant.  The Scope note below explains why.
 
 | | |
 |---|---|
@@ -10,7 +23,30 @@ A Laravel 12 + Bootstrap 4 task manager built for the practical coding test. It 
 | Auth | Session auth, 3 roles (admin / manager / member) |
 | Tests | Feature tests (`php artisan test`) |
 
+
+## Scope note (read this first)
+
+The brief asks for a simple task manager. I built the required features
+first — create, list, edit, delete with a modal, completed/pending — and
+those are deliberately small and easy to follow:
+
+    routes/web.php → TaskController → TaskRequest → TaskService → Task model → Blade
+
+Everything after that is a stretch goal I chose to add because it's how I
+actually build: role-based security, an audit trail, and an AI assistant.
+
+The AI is not a gimmick and it's not padding. It's a pattern I use across
+most of my projects: instead of making a user learn the whole app, let them
+say what they want and act on it directly. Here it can find, create, update,
+complete and delete tasks by chat but every write goes through an editable
+confirmation card and the exact same policies and service layer as the web
+UI, so it can never do more than the signed-in user could do by hand.
+
+If you only have two minutes: quick start below, then open the AI panel and
+type "show overdue" or "add task Review notes due tomorrow priority high".
+
 ---
+
 
 ## 1. Quick start on XAMPP (Windows)
 
@@ -109,6 +145,7 @@ Tests use an in-memory SQLite database, so they never touch your MySQL data. (En
 - Completing a task is trust-based with an audit trail: the assigner is notified, the action is logged, and staff can reopen it. A review/approval step was considered and left out to match the brief.
 - The admin role is unique: nobody can create, promote or delete another admin, so an account takeover cannot lock the owner out.
 - Deleting is a **soft delete** (recoverable for 30 days from your own trash) because accidental deletion is the most common data-loss bug in task apps.
+- **Time zone:** all dates and times are stored and shown in one configurable time zone, `APP_TIMEZONE` in `.env` (default `Africa/Nairobi`). Per-user time zones (convert each person's times to their own location) are the planned next step.
 - Past due dates are allowed (you may record work after the fact).
 - New tasks appear at the top of the manual order.
 - Bootstrap 4 is required, so the UI is built on 4.6; the theme layer is plain CSS in `public/css/app.css`.
@@ -147,7 +184,9 @@ Get a free key from Google AI Studio and put it in `.env`:
 ```
 GEMINI_API_KEYS=your-key-1,your-key-2
 ```
-Then `php artisan config:clear`. Several keys can be listed (comma separated); they are rotated automatically when one is rate-limited. With no key the assistant runs in **offline mode** and understands commands such as `add task Buy milk due tomorrow priority high`, `complete #3`, `show overdue`, `summary`. AI activity is logged to `storage/logs/ai-*.log` and flagged `AI` in the activity log.
+Then `php artisan config:clear`. Several keys can be listed (comma separated); they are rotated automatically when one is rate-limited. **Fast lane:** simple requests (greetings, "show overdue", "what is due this week?", "summary") are answered straight from the database in milliseconds with no AI call, and members only ever see their own tasks. Only free-form messages (adding tasks in plain language, advice, names, dates, voice or images) go to Gemini, so everyday use stays quick even when Google is slow.
+
+With no key the assistant runs in **offline mode** and understands commands such as `add task Buy milk due tomorrow priority high`, `complete #3`, `show overdue`, `summary`. AI activity is logged to `storage/logs/ai-*.log` and flagged `AI` in the activity log.
 
 ## 7. Git history
 
@@ -166,3 +205,14 @@ The history is organised in focused commits (database, auth + RBAC, task CRUD, U
 ## Checking the AI connection
 `php test_gemini.php` (or `php artisan ai:check`) tests DNS, TLS and **every key against every model**, with timings, using the same keys the app uses. Add `--quick` for a single request. Everything the assistant does (each request, lane, tool call, Gemini attempt, timing, failure reason) is written to `storage/logs/ai-YYYY-MM-DD.log` as JSON lines; the short `ref` code shown under an AI message finds its lines.
 If you see `cURL error 6 (could not resolve host)`: the app already forces IPv4 and retries; if it persists, check DNS/firewall/antivirus on the machine running PHP.
+
+## What I'd do next / what I'm not happy with
+
+- Per-user time zones. Right now everything is one APP_TIMEZONE; correct,
+  but not what a distributed team needs.
+- The task list query has grown a lot of filters. If it keeps growing I'd
+  move filtering into a dedicated query object instead of TaskService.
+- The AI confirmation flow is solid, but the offline command parser is
+  regex-based and will need replacing if it gets much bigger.
+- I'd add a review/approval step on completion — I left it out to match the
+  brief, but real teams usually want it.
