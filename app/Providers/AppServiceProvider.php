@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use App\Models\User;
+use App\Support\Tz;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -18,6 +20,11 @@ class AppServiceProvider extends ServiceProvider
     {
         // The assessment requires Bootstrap 4 markup for pagination.
         Paginator::useBootstrapFour();
+
+        // $date->inUserTz() shows a stored (UTC) moment in the signed-in person's own time zone.
+        Carbon::macro('inUserTz', function () {
+            return Tz::local($this);
+        });
 
         // Coarse-grained, role-based abilities (task-level rules live in App\Policies\TaskPolicy).
         Gate::define('manage-users', fn (User $u) => $u->isStaff());                       // open the Users page

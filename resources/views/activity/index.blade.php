@@ -18,7 +18,7 @@
       @if ($l->properties && $l->action === 'updated')<br><small class="mono">@foreach ($l->properties as $k => $v)@if (is_array($v)){{ $k }}: {{ $v['from'] ?? '∅' }} → {{ $v['to'] ?? '∅' }}@if (! $loop->last) · @endif @endif @endforeach</small>@endif</td>
     <td>{{ $l->user?->name ?? 'System' }}</td>
     <td>@if ($l->source === 'ai')<span class="badge" style="background:var(--gold);color:#1a1500"><svg class="tm-ai-logo" viewBox="0 0 32 32" width="1em" height="1em" aria-hidden="true"><use href="#tm-logo"/></svg> AI</span>@else<span class="badge badge-soft">Web</span>@endif</td>
-    <td title="{{ $l->created_at->format('d M Y H:i:s') }}">{{ $l->created_at->diffForHumans() }}</td></tr>
+    <td title="{{ $l->created_at->inUserTz()->format('d M Y H:i:s T') }}">{{ $l->created_at->diffForHumans() }}</td></tr>
   @empty <tr><td colspan="5" class="text-center text-muted py-4">Nothing logged yet.</td></tr> @endforelse</tbody></table></div>
   <div class="card-footer">{{ $logs->links() }}</div></div>
 @endsection

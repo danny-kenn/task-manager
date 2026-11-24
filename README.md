@@ -13,7 +13,7 @@
 > The **AI assistant is optional**. With no Gemini key the whole app works normally and the assistant answers in offline mode.
 > Live demo: **https://tasks.dominium.co.ke/** (the repository is the main submission).
 
-A Laravel 12 + Bootstrap 4 task manager built for the practical test. All required features and all three bonus features are done. I also added role-based access, an audit trail and an AI assistant.  The Scope note below explains why.
+A Laravel 12 + Bootstrap 4 task manager built for the practical test. All required features and all three bonus features are done. I also added role-based access, per-user time zones, an audit trail and an AI assistant. The Scope note below explains why.
 
 | | |
 |---|---|
@@ -27,22 +27,23 @@ A Laravel 12 + Bootstrap 4 task manager built for the practical test. All requir
 ## Scope note (read this first)
 
 The brief asks for a simple task manager. I built the required features
-first — create, list, edit, delete with a modal, completed/pending and
-those are deliberately small and easy to follow:
+first (create, list, edit, delete with a modal, and completed/pending
+toggling). Those parts are deliberately small and easy to follow:
 
     routes/web.php → TaskController → TaskRequest → TaskService → Task model → Blade
 
 Everything after that is a stretch goal I chose to add because it's how I
-actually build: role-based security, an audit trail, and an AI assistant.
+actually build: role-based security, an audit trail, per-user time zones and
+an AI assistant.
 
 The AI is not a gimmick and it's not padding. It's a pattern I use across
 most of my projects: instead of making a user learn the whole app, let them
 say what they want and act on it directly. Here it can find, create, update,
-complete and delete tasks by chat but every write goes through an editable
+complete and delete tasks by chat, but every write goes through an editable
 confirmation card and the exact same policies and service layer as the web
 UI, so it can never do more than the signed-in user could do by hand.
 
-If you only have two minutes: quick start below, then open the AI panel and
+If you only have two minutes: quick start above, then open the AI panel and
 type "show overdue" or "add task Review notes due tomorrow priority high".
 
 ---
@@ -72,7 +73,7 @@ php artisan serve
 | Manager | `manager@taskmanager.test` | `password` |
 | Member | `member@taskmanager.test` | `password` |
 
-The default `.env` uses `DB_USERNAME=root` with an empty password, which is the XAMPP default. If you set a MySQL password, put it in `DB_PASSWORD`.
+The default `.env` uses `DB_USERNAME=root` with an empty password, which is the XAMPP default. If you set a MySQL password, put it in `DB_PASSWORD`. Leave `APP_TIMEZONE=UTC`: times are stored in UTC and each person sees them in their own time zone (see section 2).
 
 No `npm install` is needed: Bootstrap, jQuery, Font Awesome, SortableJS and Chart.js are committed under `public/vendor`.
 
@@ -113,6 +114,7 @@ Tests use an in-memory SQLite database, so they never touch your MySQL data. (En
 
 ### Beyond the brief
 - **Role-based access control** (one admin / managers / members) enforced in layers: route middleware, gates, a `TaskPolicy` and row-level query scoping. Members are isolated peers, only staff assign work, a member's own tasks are private from staff, and the admin role cannot be duplicated. See [`docs/RBAC.md`](docs/RBAC.md).
+- **Per-user time zones:** every timestamp is stored in UTC and shown in the viewer's own zone, so a task finished at 8 pm in Nairobi reads 1 pm for a colleague in New York. The zone is detected from the browser at sign-in and can be changed in Profile. "Overdue", "due today" and the dashboard chart follow the viewer's own day (`app/Support/Tz.php`).
 - **Service layer** (`TaskService`) so the web UI, the AI assistant and the seeder share one code path and one set of rules.
 - **Dashboard** with live stats, 14-day completion chart, priority chart, upcoming tasks and team workload.
 - **Priorities, due dates, categories, tags, checklists (subtasks), comments.**
@@ -130,7 +132,7 @@ Tests use an in-memory SQLite database, so they never touch your MySQL data. (En
 2. **Thin controllers, fat services.** Controllers authorise, validate and return a response. All business rules (status timestamps, ordering, audit logging) live in `TaskService`.
 3. **One validation definition.** `TaskRequest::baseRules()` is used by the create form, the edit form and the AI assistant.
 4. **Security by default.** Every task route is protected by policy; members cannot even see other people's tasks (they get a 403 on direct URL access) and staff cannot open a member's personal tasks. The AI can never do more than the signed-in user.
-5. **Tests for behaviour, not lines.** The suite covers validation, CRUD, status toggle, search, pagination, reordering, every role boundary, the AI flow, and renders every page for every role.
+5. **Tests for behaviour, not lines.** The suite covers validation, CRUD, status toggle, search, pagination, reordering, every role boundary, time zones, the AI flow, and renders every page for every role.
 
 ![ERD](docs/ERD.png)
 
@@ -145,7 +147,7 @@ Tests use an in-memory SQLite database, so they never touch your MySQL data. (En
 - Completing a task is trust-based with an audit trail: the assigner is notified, the action is logged, and staff can reopen it. A review/approval step was considered and left out to match the brief.
 - The admin role is unique: nobody can create, promote or delete another admin, so an account takeover cannot lock the owner out.
 - Deleting is a **soft delete** (recoverable for 30 days from your own trash) because accidental deletion is the most common data-loss bug in task apps.
-- **Time zone:** all dates and times are stored and shown in one configurable time zone, `APP_TIMEZONE` in `.env` (default `Africa/Nairobi`). Per-user time zones (convert each person's times to their own location) are the planned next step.
+- **Time zones:** timestamps are stored in UTC (`APP_TIMEZONE=UTC`) and shown in each person's own zone, detected from the browser at sign-in or chosen under Profile, Time zone (a manual choice is never overridden). Exports and the AI assistant use the viewer's zone too. Due dates are plain calendar days and are not shifted between zones. The overdue reminder command still counts days in UTC.
 - Past due dates are allowed (you may record work after the fact).
 - New tasks appear at the top of the manual order.
 - Bootstrap 4 is required, so the UI is built on 4.6; the theme layer is plain CSS in `public/css/app.css`.
@@ -166,10 +168,11 @@ app/
   Console/Commands/ NotifyOverdue, PurgeTrash, MailTest, AiCheck
   Policies/         TaskPolicy
   Services/         TaskService, StatsService, ActivityLogger, Ai/{GeminiClient, AssistantService, AiActions, OfflineAssistant, AiLog}
+  Support/          Tz (per-user time zones)
 database/           migrations, factories, seeders (demo data)
 resources/views/    layouts, partials, tasks, dashboard, categories, users, activity, profile, auth, errors
 public/             css/app.css, js/app.js, js/ai.js, vendor/ (Bootstrap 4, jQuery, Font Awesome, SortableJS, Chart.js)
-tests/Feature/      Auth, TaskCrud, Rbac, AiAssistant, PagesRender, V2Features
+tests/Feature/      Auth, TaskCrud, Rbac, AiAssistant, PagesRender, V2Features, Timezone
 docs/               DATABASE, ARCHITECTURE, RBAC, AI_ASSISTANT, WORKPLAN, ERD
 ```
 
@@ -190,7 +193,7 @@ With no key the assistant runs in **offline mode** and understands commands such
 
 ## 7. Git history
 
-The history is organised in focused commits (database, auth + RBAC, task CRUD, UI, AI, tests, docs, then the access-control hardening). Run `git log --oneline` to see it.
+The history is organised in focused commits (database, auth + RBAC, task CRUD, UI, AI, tests, docs, then the access-control hardening and time zones). Run `git log --oneline` to see it.
 
 ## 8. Troubleshooting
 
@@ -201,18 +204,19 @@ The history is organised in focused commits (database, auth + RBAC, task CRUD, U
 | Blank page / 500 error | Run `php artisan key:generate` and `php artisan config:clear`; check `storage/logs/laravel.log`. |
 | `Your requirements could not be resolved` | PHP must be 8.2+. Use a newer XAMPP or point Composer at it. |
 | AI says "offline mode" | No `GEMINI_API_KEYS` in `.env`, or `php artisan config:clear` was not run. |
+| Times look off by some hours | Open Profile, Time zone and pick your zone (or "Detect automatically"). Keep `APP_TIMEZONE=UTC` in `.env`. |
 
 ## Checking the AI connection
 `php test_gemini.php` (or `php artisan ai:check`) tests DNS, TLS and **every key against every model**, with timings, using the same keys the app uses. Add `--quick` for a single request. Everything the assistant does (each request, lane, tool call, Gemini attempt, timing, failure reason) is written to `storage/logs/ai-YYYY-MM-DD.log` as JSON lines; the short `ref` code shown under an AI message finds its lines.
 If you see `cURL error 6 (could not resolve host)`: the app already forces IPv4 and retries; if it persists, check DNS/firewall/antivirus on the machine running PHP.
 
-## What I'd do next 
+## What I'd do next
 
-- Per-user time zones. Right now everything is one APP_TIMEZONE; correct,
-  but not what a distributed team needs.
 - The task list query has grown a lot of filters. If it keeps growing I'd
   move filtering into a dedicated query object instead of TaskService.
 - The AI confirmation flow is solid, but the offline command parser is
   regex-based and will need replacing if it gets much bigger.
-- I'd add a review/approval step on completion — I left it out to match the
+- I'd add a review/approval step on completion. I left it out to match the
   brief, but real teams usually want it.
+- Make the overdue reminder command count days in each assignee's own time
+  zone (it uses UTC days today).

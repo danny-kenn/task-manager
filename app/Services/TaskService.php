@@ -49,8 +49,8 @@ class TaskService
         }
         match ($f['due'] ?? null) {
             'overdue' => $q->overdue(),
-            'today' => $q->whereDate('due_date', today()),
-            'week' => $q->whereBetween('due_date', [today(), today()->addDays(7)]),
+            'today' => $q->whereDate('due_date', \App\Support\Tz::today($user)),
+            'week' => $q->whereBetween('due_date', [\App\Support\Tz::today($user), \App\Support\Tz::today($user)->addDays(7)]),
             'none' => $q->whereNull('due_date'),
             default => null,
         };
@@ -61,7 +61,7 @@ class TaskService
             'due' => $q->orderByRaw('due_date is null')->orderBy('due_date'),
             'priority' => $q->orderByRaw("case priority when 'urgent' then 4 when 'high' then 3 when 'medium' then 2 else 1 end desc")->orderByDesc('id'),
             'title' => $q->orderBy('title'),
-            'smart' => $q->orderByRaw("case when status = 'pending' and due_date is not null and due_date < ? then 0 else 1 end", [today()->toDateString()])
+            'smart' => $q->orderByRaw("case when status = 'pending' and due_date is not null and due_date < ? then 0 else 1 end", [\App\Support\Tz::today($user)->toDateString()])
                 ->orderByRaw("case priority when 'urgent' then 4 when 'high' then 3 when 'medium' then 2 else 1 end desc")
                 ->orderByRaw('due_date is null')->orderBy('due_date'),
             default => $q->manualOrderFor($user),

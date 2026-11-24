@@ -8,6 +8,7 @@ use App\Models\ActivityLog;
 use App\Models\Category;
 use App\Models\Task;
 use App\Models\User;
+use App\Support\Tz;
 use Illuminate\Support\Carbon;
 
 /** Numbers for the dashboard, scoped to what the user is allowed to see. */
@@ -21,12 +22,14 @@ class StatsService
         $completed = $base()->where('status', TaskStatus::Completed->value)->count();
         $pending = $total - $completed;
         $overdue = $base()->overdue()->count();
-        $dueToday = $base()->where('status', 'pending')->whereDate('due_date', today())->count();
+        $dueToday = $base()->where('status', 'pending')->whereDate('due_date', \App\Support\Tz::today($user))->count();
 
         // Completed per day for the last 14 days (grouped in PHP so it is identical on MySQL and SQLite).
-        $from = today()->subDays(13);
-        $byDay = $base()->where('status', 'completed')->where('completed_at', '>=', $from)->get(['completed_at'])
-            ->groupBy(fn ($t) => $t->completed_at->toDateString())->map->count();
+        // Days are the viewer's own days: window starts at their local midnight, 13 days back.
+        $from = Tz::today($user)->subDays(13);
+        $fromUtc = Carbon::parse($from->toDateString(), Tz::name($user))->startOfDay()->utc();
+        $byDay = $base()->where('status', 'completed')->where('completed_at', '>=', $fromUtc)->get(['completed_at'])
+            ->groupBy(fn ($t) => Tz::local($t->completed_at, $user)->toDateString())->map->count();
         $trend = collect(range(0, 13))->map(function ($i) use ($from, $byDay) {
             $d = Carbon::parse($from)->addDays($i);
 

@@ -4,6 +4,7 @@
 @section('content')
 <form method="POST" action="{{ route('login.attempt') }}" novalidate class="once" data-no-ajax>
   @csrf
+  <input type="hidden" name="timezone" value="">
   <div class="form-group">
     <label for="email">Email</label>
     <input type="email" id="email" name="email" value="{{ old('email') }}" class="form-control @error('email') is-invalid @enderror" autocomplete="username" autofocus required>

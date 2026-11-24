@@ -14,7 +14,7 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
-    protected $fillable = ['name', 'email', 'password', 'role', 'is_active', 'avatar_color', 'avatar_path', 'notify_prefs', 'onboarded_at', 'last_login_at', 'approved_at'];
+    protected $fillable = ['name', 'email', 'password', 'role', 'is_active', 'avatar_color', 'timezone', 'timezone_manual', 'avatar_path', 'notify_prefs', 'onboarded_at', 'last_login_at', 'approved_at'];
 
     protected $hidden = ['password', 'remember_token'];
 
@@ -26,6 +26,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'role' => UserRole::class,
             'is_active' => 'boolean',
+            'timezone_manual' => 'boolean',
             'notify_prefs' => 'array',
             'onboarded_at' => 'datetime',
             'approved_at' => 'datetime',

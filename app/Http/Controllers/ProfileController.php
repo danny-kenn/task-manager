@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\Notifier;
+use App\Support\Tz;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -36,6 +37,49 @@ class ProfileController extends Controller
         $user->update($data);
 
         return back()->with('success', 'Profile updated.');
+    }
+
+    /**
+     * Time zone. Two callers:
+     *  - the browser, silently, with source=device (ignored when the person chose a zone by hand);
+     *  - the profile form: a named zone (saved as a manual choice) or "auto" (follow the device again).
+     */
+    public function timezone(Request $request): JsonResponse|RedirectResponse
+    {
+        $user = $request->user();
+
+        if ($request->input('source') === 'device') {
+            $tz = (string) $request->input('timezone');
+            if (! Tz::valid($tz)) {
+                return response()->json(['ok' => false, 'changed' => false], 422);
+            }
+            if ($user->timezone_manual || $user->timezone === $tz) {
+                return response()->json(['ok' => true, 'changed' => false, 'timezone' => Tz::name($user)]);
+            }
+            $user->forceFill(['timezone' => $tz])->save();
+
+            return response()->json(['ok' => true, 'changed' => true, 'timezone' => $tz]);
+        }
+
+        $request->validate([
+            'timezone' => ['required', 'string', function ($attr, $value, $fail) {
+                if ($value !== 'auto' && ! Tz::valid($value)) {
+                    $fail('Please choose a time zone from the list.');
+                }
+            }],
+        ]);
+
+        if ($request->input('timezone') === 'auto') {
+            $detected = (string) $request->input('detected');
+            $tz = Tz::valid($detected) ? $detected : Tz::name($user);
+            $user->forceFill(['timezone' => $tz, 'timezone_manual' => false])->save();
+            $msg = "Your time zone now follows this device ({$tz}).";
+        } else {
+            $user->forceFill(['timezone' => $request->input('timezone'), 'timezone_manual' => true])->save();
+            $msg = 'Time zone saved: '.$request->input('timezone').'.';
+        }
+
+        return back()->with('success', $msg);
     }
 
     public function password(Request $request): RedirectResponse

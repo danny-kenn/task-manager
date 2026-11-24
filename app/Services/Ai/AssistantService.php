@@ -225,7 +225,7 @@ class AssistantService
             $user->isManager() => 'MANAGER: sees and manages every task, assigns work to anyone, manages categories, sees the activity log, approves and manages MEMBERS only. CANNOT touch managers or the admin, change roles upward, or permanently delete.',
             default => 'MEMBER: only sees tasks they own or that are assigned to them; can edit and delete only tasks they created; on tasks assigned to them by others they can only complete/reopen, tick the checklist and comment; cannot assign tasks to other people, manage categories, see other users, the activity log or the trash.',
         };
-        $date = now()->format('l, j F Y');
+        $date = \App\Support\Tz::now($user)->format('l, j F Y, H:i T');
         $name = AiToolbox::displayName($user);
         $s = $this->stats->for($user);
         $facts = "{$s['pending']} pending, {$s['overdue']} overdue, {$s['due_today']} due today, {$s['completed']} completed.";
@@ -253,7 +253,7 @@ class AssistantService
             $user->isManager() => 'MANAGER: sees and manages every task, assigns work to anyone, manages categories, sees the activity log, approves and manages MEMBERS only. CANNOT touch managers or the admin, change roles upward, or permanently delete.',
             default => 'MEMBER: only sees tasks they own or that are assigned to them; can edit and delete only tasks they created; on tasks assigned to them by others they can only complete/reopen, tick the checklist and comment; cannot assign tasks to other people, manage categories, see other users, the activity log or the trash.',
         };
-        $date = now()->format('l, j F Y');
+        $date = \App\Support\Tz::now($user)->format('l, j F Y, H:i T');
         $s = $this->stats->for($user);
         $name = AiToolbox::displayName($user);
         $rows = $this->tasks->query($user, ['sort' => 'due'])->limit(25)->get()->map(fn (Task $t) => sprintf('#%d | %s | %s | %s | due %s | %s%s', $t->id, mb_substr($t->title, 0, 80), $t->status->value, $t->priority->value, $t->due_date?->format('Y-m-d') ?? 'none', $t->category?->name ?? 'no category', $user->isStaff() ? ' | '.($t->assignee?->name ?? 'unassigned') : ''))->implode("\n");

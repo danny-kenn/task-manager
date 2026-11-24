@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\ActivityLogger;
+use App\Support\Tz;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -50,6 +51,7 @@ class AuthController extends Controller
         $request->session()->regenerate();
 
         $user = $request->user();
+        $this->rememberTimezone($user, $request->input('timezone'));
         $user->forceFill(['last_login_at' => now()])->save();
         ActivityLogger::record($user, null, 'login', "{$user->name} signed in");
 
@@ -81,7 +83,7 @@ class AuthController extends Controller
         $active = $first || $mode === 'open';
         $colors = ['#2c7a7b', '#d4a017', '#6f42c1', '#e83e8c', '#17a2b8', '#fd7e14'];
 
-        $user = User::create($data + ['role' => $role, 'is_active' => $active, 'approved_at' => $active ? now() : null, 'avatar_color' => $colors[array_rand($colors)]]);
+        $user = User::create($data + ['role' => $role, 'is_active' => $active, 'approved_at' => $active ? now() : null, 'avatar_color' => $colors[array_rand($colors)], 'timezone' => Tz::valid($request->input('timezone')) ? $request->input('timezone') : null]);
         event(new Registered($user));
         $n = app(\App\Services\Notifier::class);
         $n->send($n->staff([$user->id], true), 'user_joined', $active ? "{$user->name} joined" : "{$user->name} is waiting for approval", "{$user->email} signed up as {$role->label()}", route('users.index', $active ? [] : ['status' => 'pending']), $user);
@@ -96,6 +98,14 @@ class AuthController extends Controller
         $request->session()->regenerate();
 
         return redirect()->route('dashboard')->with('success', "Welcome, {$user->name}! You are signed in as {$role->label()}.");
+    }
+
+    /** Remember the device's time zone at sign-in, unless the person has picked one by hand. */
+    private function rememberTimezone(User $user, mixed $tz): void
+    {
+        if (! $user->timezone_manual && is_string($tz) && Tz::valid($tz) && $user->timezone !== $tz) {
+            $user->forceFill(['timezone' => $tz])->save();
+        }
     }
 
     public function logout(Request $request): RedirectResponse

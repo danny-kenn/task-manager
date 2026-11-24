@@ -4,6 +4,7 @@
 @section('content')
 <form method="POST" action="{{ route('register.store') }}" novalidate class="once" data-no-ajax>
   @csrf
+  <input type="hidden" name="timezone" value="">
   <div class="form-group">
     <label for="name">Full name</label>
     <input id="name" name="name" value="{{ old('name') }}" class="form-control @error('name') is-invalid @enderror" autofocus required>

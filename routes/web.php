@@ -55,6 +55,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::post('/profile/avatar', [ProfileController::class, 'avatar'])->name('profile.avatar');
     Route::delete('/profile/avatar', [ProfileController::class, 'removeAvatar'])->name('profile.avatar.remove');
     Route::put('/profile/notifications', [ProfileController::class, 'notifications'])->name('profile.notifications');
+    Route::post('/profile/timezone', [ProfileController::class, 'timezone'])->name('profile.timezone');
 
     // Notification centre (bell), polled cheaply from the browser + Web Push registration
     Route::post('/onboarding/done', [ProfileController::class, 'tourDone'])->name('tour.done');

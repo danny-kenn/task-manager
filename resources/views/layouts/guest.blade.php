@@ -34,6 +34,7 @@
 <div id="toasts"></div>
 <script src="{{ asset('vendor/jquery/jquery.min.js') }}"></script>
 <script src="{{ asset('vendor/bootstrap/bootstrap.bundle.min.js') }}"></script>
+<script>try{var z=Intl.DateTimeFormat().resolvedOptions().timeZone;document.querySelectorAll('input[name=timezone]').forEach(function(i){i.value=z||''})}catch(e){}</script>
 <script src="{{ asset('js/app.js') }}?v={{ filemtime(public_path('js/app.js')) }}"></script>
 </body>
 </html>

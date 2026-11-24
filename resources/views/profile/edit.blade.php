@@ -26,6 +26,27 @@
         <button class="btn btn-primary"><i class="fas fa-floppy-disk mr-1"></i> Save</button>
       </form></div></div>
 
+    <div class="card mb-3" id="timezone"><div class="card-header">Time zone</div><div class="card-body">
+      <p class="text-muted mb-2">Every date and time (created, completed, activity, exports) is shown in <strong>your</strong> time zone, so people in other countries each see their own clock. For you it is now <strong>{{ \App\Support\Tz::now()->format('D, d M Y, H:i') }}</strong> ({{ \App\Support\Tz::name() }}, {{ \App\Support\Tz::now()->format('T') }}).</p>
+      <form method="POST" action="{{ route('profile.timezone') }}" novalidate class="once">@csrf
+        <input type="hidden" name="detected" id="tzDetected" value="">
+        <div class="form-group"><label for="timezone_select">Time zone</label>
+          <select id="timezone_select" name="timezone" class="form-control @error('timezone') is-invalid @enderror">
+            <option value="auto" {{ $user->timezone_manual ? '' : 'selected' }}>Detect automatically from this device</option>
+            @foreach (\App\Support\Tz::options() as $region => $zones)
+              <optgroup label="{{ $region }}">
+                @foreach ($zones as $id => $label)
+                  <option value="{{ $id }}" {{ $user->timezone_manual && $user->timezone === $id ? 'selected' : '' }}>{{ $label }}</option>
+                @endforeach
+              </optgroup>
+            @endforeach
+          </select>@error('timezone')<div class="invalid-feedback">{{ $message }}</div>@enderror</div>
+        <button class="btn btn-primary"><i class="fas fa-globe mr-1"></i> Save time zone</button>
+      </form></div></div>
+@push('scripts')
+<script>try{var d=document.getElementById('tzDetected');if(d)d.value=Intl.DateTimeFormat().resolvedOptions().timeZone||''}catch(e){}</script>
+@endpush
+
     <div class="card mb-3" id="notifications"><div class="card-header">Notifications</div><div class="card-body">
       <p class="text-muted" style="font-size:.88rem">Choose what reaches you, and where. The bell inside the app is always the fastest.</p>
       <form method="POST" action="{{ route('profile.notifications') }}" id="prefsForm">@csrf @method('PUT')

@@ -76,7 +76,7 @@ class Task extends Model
     {
         return $this->due_date !== null
             && $this->status === TaskStatus::Pending
-            && $this->due_date->isBefore(today());
+            && $this->due_date->isBefore(\App\Support\Tz::today());
     }
 
     /** 0-100: share of finished subtasks (100 when the task itself is completed). */
@@ -151,7 +151,7 @@ class Task extends Model
 
     public function scopeOverdue(Builder $q): Builder
     {
-        return $q->where('status', TaskStatus::Pending->value)->whereNotNull('due_date')->whereDate('due_date', '<', today());
+        return $q->where('status', TaskStatus::Pending->value)->whereNotNull('due_date')->whereDate('due_date', '<', \App\Support\Tz::today());
     }
 
     public function scopeManualOrder(Builder $q): Builder

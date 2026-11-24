@@ -6,6 +6,7 @@ use App\Models\ActivityLog;
 use App\Models\Category;
 use App\Models\Task;
 use App\Models\User;
+use App\Support\Tz;
 use ZipArchive;
 
 /**
@@ -56,7 +57,7 @@ class ReportService
     {
         abort_unless(in_array($dataset, self::DATASETS, true) && self::allowed($user, $dataset), 403, 'Your role cannot export that data.');
 
-        $stamp = now()->format('d M Y, H:i');
+        $stamp = \App\Support\Tz::now($user)->format('d M Y, H:i T');
 
         switch ($dataset) {
             case 'tasks':
@@ -64,7 +65,7 @@ class ReportService
                 $rows = $tasks->map(fn (Task $t) => [
                     $t->id, $t->title, $t->status->label(), $t->priority->label(), $t->due_date?->format('Y-m-d') ?? '',
                     $t->is_overdue ? 'Yes' : 'No', $t->category?->name ?? '', $t->assignee?->name ?? '', $t->owner?->name ?? '',
-                    $t->tags->pluck('name')->implode(', '), $t->subtasks_done_count.'/'.$t->subtasks_count, $t->created_at->format('Y-m-d'),
+                    $t->tags->pluck('name')->implode(', '), $t->subtasks_done_count.'/'.$t->subtasks_count, Tz::local($t->created_at, $user)->format('Y-m-d'),
                 ])->all();
 
                 return $this->pack('Tasks report', $this->describe($filters).' · '.$stamp, ['ID', 'Title', 'Status', 'Priority', 'Due', 'Overdue', 'Category', 'Assignee', 'Owner', 'Tags', 'Checklist', 'Created'], $rows);
@@ -89,13 +90,13 @@ class ReportService
 
             case 'activity':
                 $rows = ActivityLog::query()->withoutPersonalTasks()->with('user')->latest('id')->limit(500)->get()
-                    ->map(fn ($a) => [$a->created_at?->format('Y-m-d H:i'), $a->user?->name ?? 'System', $a->action, $a->description, strtoupper($a->source)])->all();
+                    ->map(fn ($a) => [Tz::local($a->created_at, $user)?->format('Y-m-d H:i'), $a->user?->name ?? 'System', $a->action, $a->description, strtoupper($a->source)])->all();
 
                 return $this->pack('Activity log', 'Latest 500 events · '.$stamp, ['When', 'Who', 'Action', 'Description', 'Source'], $rows);
 
             case 'users':
                 $rows = User::query()->withCount(['tasks', 'assignedTasks'])->orderBy('name')->get()
-                    ->map(fn (User $u) => [$u->name, $u->email, $u->role->label(), $u->is_active ? 'Active' : 'Deactivated', $u->tasks_count, $u->assigned_tasks_count, $u->last_login_at?->format('Y-m-d H:i') ?? 'never'])->all();
+                    ->map(fn (User $u) => [$u->name, $u->email, $u->role->label(), $u->is_active ? 'Active' : 'Deactivated', $u->tasks_count, $u->assigned_tasks_count, Tz::local($u->last_login_at, $user)?->format('Y-m-d H:i') ?? 'never'])->all();
 
                 return $this->pack('Users & roles', $stamp, ['Name', 'Email', 'Role', 'Status', 'Tasks owned', 'Tasks assigned', 'Last login'], $rows);
 

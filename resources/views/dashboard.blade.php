@@ -2,12 +2,12 @@
 @section('title', 'Dashboard')
 @section('heading', 'Dashboard')
 @section('content')
-@php($hour = (int) now()->format('G'))
+@php($hour = (int) \App\Support\Tz::now()->format('G'))
 @php($greet = $hour < 12 ? 'Good morning' : ($hour < 17 ? 'Good afternoon' : 'Good evening'))
 @php($C = 2 * M_PI * 38)
 <section class="hero">
   <div class="hero-text">
-    <span class="hero-kicker">{{ now()->format('l, j F') }}</span>
+    <span class="hero-kicker">{{ \App\Support\Tz::now()->format('l, j F') }}</span>
     <h2>{{ $greet }}, {{ auth()->user()->first_name }}</h2>
     <p>
       @if ($s['overdue'] > 0) <b>{{ $s['overdue'] }} overdue</b> need attention. @endif

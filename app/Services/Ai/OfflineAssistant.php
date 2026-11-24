@@ -106,10 +106,10 @@ class OfflineAssistant
         $phrase = strtolower(trim($phrase));
         try {
             return match (true) {
-                $phrase === 'today' => today()->toDateString(),
-                $phrase === 'tomorrow' => today()->addDay()->toDateString(),
-                $phrase === 'next week' => today()->addWeek()->toDateString(),
-                (bool) preg_match('/^in (\d+) days?$/', $phrase, $m) => today()->addDays((int) $m[1])->toDateString(),
+                $phrase === 'today' => \App\Support\Tz::today()->toDateString(),
+                $phrase === 'tomorrow' => \App\Support\Tz::today()->addDay()->toDateString(),
+                $phrase === 'next week' => \App\Support\Tz::today()->addWeek()->toDateString(),
+                (bool) preg_match('/^in (\d+) days?$/', $phrase, $m) => \App\Support\Tz::today()->addDays((int) $m[1])->toDateString(),
                 default => Carbon::parse($phrase)->toDateString(),
             };
         } catch (\Throwable) {

@@ -11,7 +11,7 @@
   <div class="task-main">
     <a class="task-title" href="{{ route('tasks.show', $task) }}">{{ $task->title }}</a>
     <div class="task-meta">
-      <span class="chip" title="Created {{ $task->created_at->format('d M Y, H:i') }}"><i class="far fa-calendar-plus"></i> Created {{ $task->created_at->format('d M Y') }}</span>
+      <span class="chip" title="Created {{ $task->created_at->inUserTz()->format('d M Y, H:i T') }}"><i class="far fa-calendar-plus"></i> Created {{ $task->created_at->inUserTz()->format('d M Y') }}</span>
       @if ($task->due_date)
         <span class="chip {{ $overdue ? 'text-danger font-weight-bold' : '' }}"><i class="far fa-calendar-check"></i> {{ $overdue ? 'Overdue' : 'Due' }} {{ $task->due_date->format('d M') }}</span>
       @endif

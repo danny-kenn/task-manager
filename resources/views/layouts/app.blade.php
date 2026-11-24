@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="csrf-token" content="{{ csrf_token() }}">
+<meta name="user-tz" content="{{ \App\Support\Tz::name() }}">
+<meta name="user-tz-manual" content="{{ auth()->user()?->timezone_manual ? 1 : 0 }}">
 <meta name="vapid-key" content="{{ config('services.webpush.public_key') }}">
 <meta name="theme-color" content="#0d1117" id="themeColor">
 <meta name="mobile-web-app-capable" content="yes">
@@ -37,10 +39,22 @@ window.TMCFG = {
     avatar: @json(route('profile.avatar')),
     avatarRemove: @json(route('profile.avatar.remove')),
     offline: @json(route('pwa.offline')),
-    login: @json(route('login'))
+    login: @json(route('login')),
+    tzSync: @json(route('profile.timezone'))
   },
   vapid: @json((string) config('services.webpush.public_key'))
 };
+</script>
+<script>
+/* Time zone: follow this device unless the person picked a zone by hand (profile). Runs once per session per zone. */
+(function(){try{
+  var q=function(n){var m=document.querySelector('meta[name="'+n+'"]');return m?m.content:''};
+  var b=Intl.DateTimeFormat().resolvedOptions().timeZone;
+  if(!b||q('user-tz-manual')==='1'||b===q('user-tz'))return;
+  var k='tm-tz-sync:'+b; if(sessionStorage.getItem(k))return; sessionStorage.setItem(k,'1');
+  fetch(window.TMCFG.routes.tzSync,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','Accept':'application/json','X-CSRF-TOKEN':q('csrf-token')},body:JSON.stringify({timezone:b,source:'device'})})
+    .then(function(r){return r.json()}).then(function(d){if(d&&d.changed)location.reload()}).catch(function(){});
+}catch(e){}})();
 </script>
 <script src="{{ asset('vendor/jquery/jquery.min.js') }}"></script>
 <script src="{{ asset('vendor/bootstrap/bootstrap.bundle.min.js') }}"></script>

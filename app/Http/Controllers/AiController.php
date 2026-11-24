@@ -270,7 +270,7 @@ class AiController extends Controller
 
         return ['conversation' => ['id' => $c->id, 'title' => $c->title], 'messages' => $msgs->map(fn ($m) => [
             'id' => $m->id, 'role' => $m->role, 'content' => $m->content, 'proposals' => $m->proposals ?? [], 'blocks' => $m->blocks ?? [], 'followups' => $m->followups ?? [],
-            'steps' => $m->steps ?? [], 'thinking_ms' => $m->thinking_ms, 'attachments' => $this->attachmentPayload($m), 'time' => $m->created_at?->format('H:i'),
+            'steps' => $m->steps ?? [], 'thinking_ms' => $m->thinking_ms, 'attachments' => $this->attachmentPayload($m), 'time' => \App\Support\Tz::local($m->created_at)?->format('H:i'),
         ])->all()];
     }
 

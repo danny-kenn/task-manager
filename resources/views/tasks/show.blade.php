@@ -76,9 +76,9 @@
         <dt>Category</dt><dd>@if ($task->category)<span class="dot" style="background:{{ $task->category->color }}"></span> {{ $task->category->name }}@else — @endif</dd>
         <dt>Owner</dt><dd><x-avatar :user="$task->owner" size="sm" /> {{ $task->owner->name }}</dd>
         <dt>Assignee</dt><dd>@if ($task->assignee)<x-avatar :user="$task->assignee" size="sm" /> {{ $task->assignee->name }}@else Unassigned @endif</dd>
-        <dt>Created</dt><dd>{{ $task->created_at->format('d M Y, H:i') }}</dd>
+        <dt>Created</dt><dd>{{ $task->created_at->inUserTz()->format('d M Y, H:i T') }}</dd>
         <dt>Updated</dt><dd>{{ $task->updated_at->diffForHumans() }}</dd>
-        @if ($task->completed_at)<dt>Completed</dt><dd>{{ $task->completed_at->format('d M Y, H:i') }}</dd>@endif
+        @if ($task->completed_at)<dt>Completed</dt><dd>{{ $task->completed_at->inUserTz()->format('d M Y, H:i T') }}</dd>@endif
         <dt>Tags</dt><dd>@forelse ($task->tags as $t)<a class="tag-chip" href="{{ route('tasks.index', ['tag' => $t->slug]) }}">#{{ $t->name }}</a> @empty — @endforelse</dd>
       </dl></div></div>
     <div class="card"><div class="card-header">History</div>
