@@ -187,7 +187,7 @@ Get a free key from Google AI Studio and put it in `.env`:
 ```
 GEMINI_API_KEYS=your-key-1,your-key-2
 ```
-Then `php artisan config:clear`. Several keys can be listed (comma separated); they are rotated automatically when one is rate-limited. **Fast lane:** simple requests (greetings, "show overdue", "what is due this week?", "summary") are answered straight from the database in milliseconds with no AI call, and members only ever see their own tasks. Only free-form messages (adding tasks in plain language, advice, names, dates, voice or images) go to Gemini, so everyday use stays quick even when Google is slow.
+Then `php artisan config:clear`. Several keys can be listed (comma separated); they are rotated automatically when one is rate-limited. **Always the AI, kept fast:** every message is answered by the AI. To keep replies quick, each request carries only the context it needs: a greeting sends a tiny prompt with two tools, a lookup sends the read-only tools and a short history, and only real task work or attachments send the full toolset. If Gemini cannot be reached, the assistant falls back to offline mode so the person always gets an answer.
 
 With no key the assistant runs in **offline mode** and understands commands such as `add task Buy milk due tomorrow priority high`, `complete #3`, `show overdue`, `summary`. AI activity is logged to `storage/logs/ai-*.log` and flagged `AI` in the activity log.
 
@@ -204,6 +204,8 @@ The history is organised in focused commits (database, auth + RBAC, task CRUD, U
 | Blank page / 500 error | Run `php artisan key:generate` and `php artisan config:clear`; check `storage/logs/laravel.log`. |
 | `Your requirements could not be resolved` | PHP must be 8.2+. Use a newer XAMPP or point Composer at it. |
 | AI says "offline mode" | No `GEMINI_API_KEYS` in `.env`, or `php artisan config:clear` was not run. |
+| Excel/Word export fails (503) | Enable `extension=zip` in `C:\xampp\php\php.ini` and restart Apache. CSV and PDF work without it. |
+| Profile photo upload does nothing | Enable `extension=gd` in `php.ini` (photos are stored as-is without it). |
 | Times look off by some hours | Open Profile, Time zone and pick your zone (or "Detect automatically"). Keep `APP_TIMEZONE=UTC` in `.env`. |
 
 ## Checking the AI connection
